@@ -31,11 +31,13 @@
             --danger: #dc2626;
             --danger-hover: #ef4444;
             --project-accent: #6366f1;
-            --equipment-accent: #f97316;
-            --equipment-bg: #432006;
-            --equipment-hover: #5a2d0a;
+            --notes-accent: #f97316;
+            --notes-bg: #432006;
+            --notes-hover: #5a2d0a;
             --comment-color: #22d3ee;
             --reorder-highlight: rgba(99, 102, 241, 0.3);
+            --completed-bg: #1a1a1a;
+            --completed-text: #666666;
         }
 
         [data-theme="light"] {
@@ -58,11 +60,13 @@
             --danger: #dc2626;
             --danger-hover: #b91c1c;
             --project-accent: #6366f1;
-            --equipment-accent: #f97316;
-            --equipment-bg: #fed7aa;
-            --equipment-hover: #fdba74;
+            --notes-accent: #f97316;
+            --notes-bg: #fed7aa;
+            --notes-hover: #fdba74;
             --comment-color: #0891b2;
             --reorder-highlight: rgba(99, 102, 241, 0.2);
+            --completed-bg: #e5e5e5;
+            --completed-text: #999999;
         }
 
         body {
@@ -216,7 +220,7 @@
         }
 
         .sidebar-header {
-            padding: 12px 14px;
+            padding: 10px 12px;
             border-bottom: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
@@ -225,6 +229,7 @@
             top: 0;
             background: var(--bg-secondary);
             z-index: 5;
+            gap: 6px;
         }
 
         .sidebar-header h2 {
@@ -233,6 +238,55 @@
             text-transform: uppercase;
             letter-spacing: 0.05em;
             color: var(--text-secondary);
+        }
+
+        .sidebar-header-btns {
+            display: flex;
+            gap: 4px;
+        }
+
+        .sidebar-tools {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 6px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 5px 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-size: 0.75rem;
+            font-family: inherit;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .sort-btn {
+            padding: 5px 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.6875rem;
+            font-weight: 500;
+            transition: all 0.15s ease;
+        }
+
+        .sort-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
         }
 
         .sidebar-content {
@@ -259,14 +313,14 @@
 
         /* Add Buttons */
         .add-btn {
-            width: 24px;
-            height: 24px;
+            width: 22px;
+            height: 22px;
             border: 1px solid var(--border);
             border-radius: 4px;
             background: var(--bg-tertiary);
             color: var(--text-secondary);
             cursor: pointer;
-            font-size: 1.125rem;
+            font-size: 1rem;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -309,12 +363,15 @@
             border-bottom: 1px solid var(--border);
             border-right: 1px solid var(--border);
             white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 15;
         }
 
         .grid-header-cell:first-child {
             position: sticky;
             left: 0;
-            z-index: 10;
+            z-index: 20;
             background: var(--bg-tertiary);
         }
 
@@ -418,7 +475,7 @@
             background: var(--drop-highlight);
         }
 
-        /* Item Cards (Projects & Equipment) */
+        /* Item Cards (Projects & Notes) */
         .item-card {
             background: var(--card-bg);
             border-radius: 4px;
@@ -449,17 +506,32 @@
             border-top: 2px solid var(--project-accent);
         }
 
-        .item-card.equipment {
-            border-left-color: var(--equipment-accent);
-            background: var(--equipment-bg);
+        .item-card.notes-type {
+            border-left-color: var(--notes-accent);
+            background: var(--notes-bg);
         }
 
-        .item-card.equipment:hover {
-            background: var(--equipment-hover);
+        .item-card.notes-type:hover {
+            background: var(--notes-hover);
         }
 
-        .item-card.equipment.reorder-target {
-            border-top-color: var(--equipment-accent);
+        .item-card.notes-type.reorder-target {
+            border-top-color: var(--notes-accent);
+        }
+
+        .item-card.completed {
+            background: var(--completed-bg) !important;
+            border-left-color: var(--text-muted) !important;
+            opacity: 0.6;
+        }
+
+        .item-card.completed .item-card-name {
+            text-decoration: line-through;
+            color: var(--completed-text);
+        }
+
+        .item-card.completed .item-card-comment {
+            color: var(--completed-text);
         }
 
         .item-card-name {
@@ -534,6 +606,46 @@
             z-index: 100;
             box-shadow: 0 2px 8px var(--shadow);
             margin-bottom: 4px;
+        }
+
+        /* Context Menu */
+        .context-menu {
+            position: fixed;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            box-shadow: 0 4px 12px var(--shadow);
+            z-index: 1000;
+            min-width: 140px;
+            padding: 4px 0;
+            display: none;
+        }
+
+        .context-menu.active {
+            display: block;
+        }
+
+        .context-menu-item {
+            padding: 8px 12px;
+            font-size: 0.8125rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.15s ease;
+        }
+
+        .context-menu-item:hover {
+            background: var(--bg-hover);
+        }
+
+        .context-menu-item.danger {
+            color: var(--danger);
+        }
+
+        .context-menu-item.danger:hover {
+            background: rgba(220, 38, 38, 0.1);
         }
 
         /* Add Foreman Row */
@@ -849,7 +961,13 @@
             <div class="sidebar-section">
                 <div class="sidebar-header">
                     <h2>Projects</h2>
-                    <button class="add-btn" id="addProjectBtn" title="Add Project">+</button>
+                    <div class="sidebar-header-btns">
+                        <button class="add-btn" id="addProjectBtn" title="Add Project">+</button>
+                    </div>
+                </div>
+                <div class="sidebar-tools">
+                    <input type="text" class="search-input" id="projectSearch" placeholder="Search projects...">
+                    <button class="sort-btn" id="sortProjectsBtn" title="Sort A-Z">Sort</button>
                 </div>
                 <div class="sidebar-content">
                     <div class="item-library" id="projectLibrary" data-type="project">
@@ -859,12 +977,14 @@
             </div>
             <div class="sidebar-section">
                 <div class="sidebar-header">
-                    <h2>Equipment</h2>
-                    <button class="add-btn" id="addEquipmentBtn" title="Add Equipment">+</button>
+                    <h2>Notes</h2>
+                    <div class="sidebar-header-btns">
+                        <button class="add-btn" id="addNotesBtn" title="Add Note">+</button>
+                    </div>
                 </div>
                 <div class="sidebar-content">
-                    <div class="item-library" id="equipmentLibrary" data-type="equipment">
-                        <div class="empty-state">No equipment yet</div>
+                    <div class="item-library" id="notesLibrary" data-type="notes">
+                        <div class="empty-state">No notes yet</div>
                     </div>
                 </div>
             </div>
@@ -881,6 +1001,14 @@
                 </button>
             </div>
         </main>
+    </div>
+
+    <!-- Context Menu -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-menu-item" data-action="duplicate">Duplicate</div>
+        <div class="context-menu-item" data-action="complete">Mark Complete</div>
+        <div class="context-menu-item" data-action="uncomplete">Mark Incomplete</div>
+        <div class="context-menu-item danger" data-action="remove">Remove</div>
     </div>
 
     <!-- Modal for adding/editing -->
@@ -914,8 +1042,8 @@
             let state = {
                 foremen: [],
                 projects: [],
-                equipment: [],
-                assignments: [],   // { id, itemId, itemType, foremanId, weekKey, comment }
+                notes: [],  // Renamed from equipment
+                assignments: [],   // { id, itemId, itemType, foremanId, weekKey, comment, completed }
                 startDate: getMonday(new Date()),
                 settings: {
                     viewMode: 4,
@@ -923,12 +1051,15 @@
                 }
             };
 
+            // Search state
+            let projectSearchQuery = '';
+
             // DOM Elements
             const scheduleGrid = document.getElementById('scheduleGrid');
             const projectLibrary = document.getElementById('projectLibrary');
-            const equipmentLibrary = document.getElementById('equipmentLibrary');
+            const notesLibrary = document.getElementById('notesLibrary');
             const addProjectBtn = document.getElementById('addProjectBtn');
-            const addEquipmentBtn = document.getElementById('addEquipmentBtn');
+            const addNotesBtn = document.getElementById('addNotesBtn');
             const addForemanBtn = document.getElementById('addForemanBtn');
             const themeToggle = document.getElementById('themeToggle');
             const viewToggle = document.querySelectorAll('.view-toggle button');
@@ -947,6 +1078,9 @@
             const mobileMenuToggle = document.getElementById('mobileMenuToggle');
             const sidebar = document.getElementById('sidebar');
             const sidebarOverlay = document.getElementById('sidebarOverlay');
+            const projectSearch = document.getElementById('projectSearch');
+            const sortProjectsBtn = document.getElementById('sortProjectsBtn');
+            const contextMenu = document.getElementById('contextMenu');
 
             let modalMode = null;
             let editingItemId = null;
@@ -954,8 +1088,14 @@
             let editingAssignmentId = null;
 
             // Reorder state
-            let reorderDragType = null; // 'foreman', 'project', 'equipment'
+            let reorderDragType = null;
             let reorderDragId = null;
+
+            // Cell reorder state
+            let cellReorderAssignmentId = null;
+
+            // Context menu state
+            let contextMenuAssignmentId = null;
 
             // Utility Functions
             function generateId() {
@@ -1003,9 +1143,15 @@
                         startDate: new Date(parsed.startDate || getMonday(new Date()))
                     };
                     state.projects = state.projects || [];
-                    state.equipment = state.equipment || [];
+                    // Migrate equipment to notes
+                    state.notes = state.notes || state.equipment || [];
+                    delete state.equipment;
                     state.assignments = state.assignments || [];
                     state.foremen = state.foremen || [];
+                    // Migrate itemType from 'equipment' to 'notes'
+                    state.assignments.forEach(a => {
+                        if (a.itemType === 'equipment') a.itemType = 'notes';
+                    });
                 }
             }
 
@@ -1013,7 +1159,7 @@
             function render() {
                 renderGrid();
                 renderLibrary('project');
-                renderLibrary('equipment');
+                renderLibrary('notes');
                 updateThemeButton();
                 updateDatePicker();
             }
@@ -1076,11 +1222,18 @@
             }
 
             function renderLibrary(type) {
-                const library = type === 'project' ? projectLibrary : equipmentLibrary;
-                const items = type === 'project' ? state.projects : state.equipment;
+                const library = type === 'project' ? projectLibrary : notesLibrary;
+                let items = type === 'project' ? state.projects : state.notes;
+
+                // Apply search filter for projects
+                if (type === 'project' && projectSearchQuery) {
+                    const query = projectSearchQuery.toLowerCase();
+                    items = items.filter(item => item.name.toLowerCase().includes(query));
+                }
 
                 if (items.length === 0) {
-                    library.innerHTML = `<div class="empty-state">No ${type}s yet</div>`;
+                    const emptyMsg = type === 'project' && projectSearchQuery ? 'No matches found' : `No ${type}s yet`;
+                    library.innerHTML = `<div class="empty-state">${emptyMsg}</div>`;
                 } else {
                     library.innerHTML = items.map((item, index) => renderLibraryCard(item, type, index)).join('');
                 }
@@ -1090,7 +1243,7 @@
 
             function renderLibraryCard(item, type, index) {
                 const notesAttr = item.notes ? `data-notes="${escapeHtml(item.notes)}"` : '';
-                const typeClass = type === 'equipment' ? 'equipment' : '';
+                const typeClass = type === 'notes' ? 'notes-type' : '';
                 return `
                     <div class="item-card ${typeClass}" draggable="true" data-item-id="${item.id}" data-item-type="${type}" data-item-index="${index}" ${notesAttr}>
                         <span class="item-card-name">${escapeHtml(item.name)}</span>
@@ -1105,9 +1258,10 @@
                 if (!item) return '';
 
                 const notesAttr = item.notes ? `data-notes="${escapeHtml(item.notes)}"` : '';
-                const typeClass = assignment.itemType === 'equipment' ? 'equipment' : '';
+                const typeClass = assignment.itemType === 'notes' ? 'notes-type' : '';
+                const completedClass = assignment.completed ? 'completed' : '';
                 return `
-                    <div class="item-card ${typeClass}" draggable="true" data-assignment-id="${assignment.id}" data-item-type="${assignment.itemType}" ${notesAttr}>
+                    <div class="item-card ${typeClass} ${completedClass}" draggable="true" data-assignment-id="${assignment.id}" data-item-type="${assignment.itemType}" ${notesAttr}>
                         <span class="item-card-name">${escapeHtml(item.name)}</span>
                         ${assignment.comment ? `<div class="item-card-comment">${escapeHtml(assignment.comment)}</div>` : ''}
                         <button class="item-card-delete" data-assignment-id="${assignment.id}" title="Remove">×</button>
@@ -1122,7 +1276,7 @@
             }
 
             function getItemById(itemId, itemType) {
-                const items = itemType === 'project' ? state.projects : state.equipment;
+                const items = itemType === 'project' ? state.projects : state.notes;
                 return items.find(i => i.id === itemId);
             }
 
@@ -1152,6 +1306,10 @@
                     card.addEventListener('dragstart', handleAssignmentDragStart);
                     card.addEventListener('dragend', handleDragEnd);
                     card.addEventListener('click', handleAssignmentCardClick);
+                    card.addEventListener('contextmenu', handleAssignmentContextMenu);
+                    card.addEventListener('dragover', handleCellCardDragOver);
+                    card.addEventListener('dragleave', handleCellCardDragLeave);
+                    card.addEventListener('drop', handleCellCardDrop);
                 });
 
                 document.querySelectorAll('.schedule-cell .item-card-delete').forEach(btn => {
@@ -1176,7 +1334,7 @@
             }
 
             function attachLibraryEventListeners(type) {
-                const library = type === 'project' ? projectLibrary : equipmentLibrary;
+                const library = type === 'project' ? projectLibrary : notesLibrary;
 
                 library.addEventListener('dragover', handleLibraryDragOver);
                 library.addEventListener('dragleave', handleLibraryDragLeave);
@@ -1194,6 +1352,119 @@
                 library.querySelectorAll('.item-card-delete').forEach(btn => {
                     btn.addEventListener('click', handleDeleteItem);
                 });
+            }
+
+            // Context Menu Handlers
+            function handleAssignmentContextMenu(e) {
+                e.preventDefault();
+                const assignmentId = e.currentTarget.dataset.assignmentId;
+                const assignment = state.assignments.find(a => a.id === assignmentId);
+
+                contextMenuAssignmentId = assignmentId;
+
+                // Show/hide complete/uncomplete based on state
+                const completeItem = contextMenu.querySelector('[data-action="complete"]');
+                const uncompleteItem = contextMenu.querySelector('[data-action="uncomplete"]');
+
+                if (assignment && assignment.completed) {
+                    completeItem.style.display = 'none';
+                    uncompleteItem.style.display = 'flex';
+                } else {
+                    completeItem.style.display = 'flex';
+                    uncompleteItem.style.display = 'none';
+                }
+
+                contextMenu.style.left = e.clientX + 'px';
+                contextMenu.style.top = e.clientY + 'px';
+                contextMenu.classList.add('active');
+            }
+
+            function handleContextMenuAction(action) {
+                if (!contextMenuAssignmentId) return;
+
+                const assignment = state.assignments.find(a => a.id === contextMenuAssignmentId);
+                if (!assignment) return;
+
+                switch(action) {
+                    case 'duplicate':
+                        const newAssignment = {
+                            ...assignment,
+                            id: generateId(),
+                            completed: false
+                        };
+                        state.assignments.push(newAssignment);
+                        break;
+                    case 'complete':
+                        assignment.completed = true;
+                        break;
+                    case 'uncomplete':
+                        assignment.completed = false;
+                        break;
+                    case 'remove':
+                        state.assignments = state.assignments.filter(a => a.id !== contextMenuAssignmentId);
+                        break;
+                }
+
+                saveData();
+                render();
+                hideContextMenu();
+            }
+
+            function hideContextMenu() {
+                contextMenu.classList.remove('active');
+                contextMenuAssignmentId = null;
+            }
+
+            // Cell card reorder handlers
+            function handleCellCardDragOver(e) {
+                if (!cellReorderAssignmentId) return;
+                e.preventDefault();
+                e.stopPropagation();
+                e.currentTarget.classList.add('reorder-target');
+            }
+
+            function handleCellCardDragLeave(e) {
+                e.currentTarget.classList.remove('reorder-target');
+            }
+
+            function handleCellCardDrop(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.currentTarget.classList.remove('reorder-target');
+
+                if (!cellReorderAssignmentId) return;
+
+                const targetId = e.currentTarget.dataset.assignmentId;
+                if (!targetId || targetId === cellReorderAssignmentId) return;
+
+                const draggedAssignment = state.assignments.find(a => a.id === cellReorderAssignmentId);
+                const targetAssignment = state.assignments.find(a => a.id === targetId);
+
+                if (!draggedAssignment || !targetAssignment) return;
+
+                // Only reorder within same cell
+                if (draggedAssignment.foremanId !== targetAssignment.foremanId ||
+                    draggedAssignment.weekKey !== targetAssignment.weekKey) return;
+
+                const cellAssignments = state.assignments.filter(a =>
+                    a.foremanId === draggedAssignment.foremanId &&
+                    a.weekKey === draggedAssignment.weekKey
+                );
+
+                const fromIndex = cellAssignments.findIndex(a => a.id === cellReorderAssignmentId);
+                const toIndex = cellAssignments.findIndex(a => a.id === targetId);
+
+                if (fromIndex !== -1 && toIndex !== -1) {
+                    // Get global indices
+                    const globalFromIndex = state.assignments.indexOf(draggedAssignment);
+                    const globalToIndex = state.assignments.indexOf(targetAssignment);
+
+                    const [moved] = state.assignments.splice(globalFromIndex, 1);
+                    state.assignments.splice(globalToIndex, 0, moved);
+
+                    saveData();
+                    render();
+                }
             }
 
             // Foreman reorder handlers
@@ -1238,6 +1509,7 @@
             function handleReorderEnd() {
                 reorderDragType = null;
                 reorderDragId = null;
+                cellReorderAssignmentId = null;
                 document.querySelectorAll('.reorder-target').forEach(el => el.classList.remove('reorder-target'));
             }
 
@@ -1265,7 +1537,7 @@
                 const targetId = e.currentTarget.dataset.itemId;
                 if (!targetId || targetId === reorderDragId) return;
 
-                const items = targetType === 'project' ? state.projects : state.equipment;
+                const items = targetType === 'project' ? state.projects : state.notes;
                 const fromIndex = items.findIndex(i => i.id === reorderDragId);
                 const toIndex = items.findIndex(i => i.id === targetId);
 
@@ -1282,9 +1554,9 @@
                 const itemType = e.target.dataset.itemType;
                 const itemId = e.target.dataset.itemId;
 
-                // Set as reorder if dragging within library
                 reorderDragType = itemType;
                 reorderDragId = itemId;
+                cellReorderAssignmentId = null;
 
                 e.target.classList.add('dragging');
                 e.dataTransfer.setData('application/json', JSON.stringify({
@@ -1299,6 +1571,8 @@
             function handleAssignmentDragStart(e) {
                 reorderDragType = null;
                 reorderDragId = null;
+                cellReorderAssignmentId = e.target.dataset.assignmentId;
+
                 e.target.classList.add('dragging');
                 e.dataTransfer.setData('application/json', JSON.stringify({
                     source: 'grid',
@@ -1314,6 +1588,7 @@
                 document.querySelectorAll('.reorder-target').forEach(el => el.classList.remove('reorder-target'));
                 reorderDragType = null;
                 reorderDragId = null;
+                cellReorderAssignmentId = null;
             }
 
             function handleDragOver(e) {
@@ -1343,7 +1618,8 @@
                             itemType: data.itemType,
                             foremanId: foremanId,
                             weekKey: weekKey,
-                            comment: null
+                            comment: null,
+                            completed: false
                         });
                     } else if (data.source === 'grid') {
                         const assignment = state.assignments.find(a => a.id === data.assignmentId);
@@ -1361,7 +1637,6 @@
             }
 
             function handleLibraryDragOver(e) {
-                // Don't show drop zone if this is a library reorder
                 if (reorderDragType) return;
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'move';
@@ -1376,7 +1651,6 @@
                 e.preventDefault();
                 e.currentTarget.classList.remove('drag-over');
 
-                // If this was a library reorder, ignore
                 if (reorderDragType) return;
 
                 try {
@@ -1397,7 +1671,7 @@
 
                 const itemId = e.currentTarget.dataset.itemId;
                 const itemType = e.currentTarget.dataset.itemType;
-                const items = itemType === 'project' ? state.projects : state.equipment;
+                const items = itemType === 'project' ? state.projects : state.notes;
                 const item = items.find(i => i.id === itemId);
 
                 if (item) {
@@ -1426,7 +1700,7 @@
                     if (itemType === 'project') {
                         state.projects = state.projects.filter(p => p.id !== itemId);
                     } else {
-                        state.equipment = state.equipment.filter(eq => eq.id !== itemId);
+                        state.notes = state.notes.filter(n => n.id !== itemId);
                     }
                     state.assignments = state.assignments.filter(a => !(a.itemId === itemId && a.itemType === itemType));
                     saveData();
@@ -1453,6 +1727,19 @@
                 }
             }
 
+            // Search handler
+            function handleProjectSearch(e) {
+                projectSearchQuery = e.target.value;
+                renderLibrary('project');
+            }
+
+            // Sort handler
+            function handleSortProjects() {
+                state.projects.sort((a, b) => a.name.localeCompare(b.name));
+                saveData();
+                renderLibrary('project');
+            }
+
             // Modal Handlers
             function openModal(mode, data = null) {
                 modalMode = mode;
@@ -1461,7 +1748,6 @@
                 editingItemType = null;
                 editingAssignmentId = null;
 
-                // Reset fields
                 modalComment.value = '';
                 commentField.style.display = 'none';
                 notesField.style.display = 'block';
@@ -1479,19 +1765,19 @@
                     modalNotes.value = data.notes || '';
                     editingItemId = data.id;
                     editingItemType = 'project';
-                } else if (mode === 'add-equipment') {
-                    modalTitle.textContent = 'Add Equipment';
+                } else if (mode === 'add-notes') {
+                    modalTitle.textContent = 'Add Note';
                     modalSubmit.textContent = 'Add';
                     modalName.value = '';
                     modalNotes.value = '';
-                    editingItemType = 'equipment';
-                } else if (mode === 'edit-equipment') {
-                    modalTitle.textContent = 'Edit Equipment';
+                    editingItemType = 'notes';
+                } else if (mode === 'edit-notes') {
+                    modalTitle.textContent = 'Edit Note';
                     modalSubmit.textContent = 'Save';
                     modalName.value = data.name;
                     modalNotes.value = data.notes || '';
                     editingItemId = data.id;
-                    editingItemType = 'equipment';
+                    editingItemType = 'notes';
                 } else if (mode === 'add-foreman') {
                     modalTitle.textContent = 'Add Foreman';
                     modalSubmit.textContent = 'Add';
@@ -1557,17 +1843,17 @@
                         project.name = name;
                         project.notes = modalNotes.value.trim() || null;
                     }
-                } else if (modalMode === 'add-equipment') {
-                    state.equipment.push({
+                } else if (modalMode === 'add-notes') {
+                    state.notes.push({
                         id: generateId(),
                         name: name,
                         notes: modalNotes.value.trim() || null
                     });
-                } else if (modalMode === 'edit-equipment') {
-                    const equip = state.equipment.find(eq => eq.id === editingItemId);
-                    if (equip) {
-                        equip.name = name;
-                        equip.notes = modalNotes.value.trim() || null;
+                } else if (modalMode === 'edit-notes') {
+                    const note = state.notes.find(n => n.id === editingItemId);
+                    if (note) {
+                        note.name = name;
+                        note.notes = modalNotes.value.trim() || null;
                     }
                 } else if (modalMode === 'add-foreman') {
                     state.foremen.push({
@@ -1638,7 +1924,7 @@
 
                 // Event Listeners
                 addProjectBtn.addEventListener('click', () => openModal('add-project'));
-                addEquipmentBtn.addEventListener('click', () => openModal('add-equipment'));
+                addNotesBtn.addEventListener('click', () => openModal('add-notes'));
                 addForemanBtn.addEventListener('click', () => openModal('add-foreman'));
                 themeToggle.addEventListener('click', toggleTheme);
                 startDatePicker.addEventListener('change', handleDateChange);
@@ -1656,11 +1942,26 @@
                 mobileMenuToggle.addEventListener('click', toggleMobileMenu);
                 sidebarOverlay.addEventListener('click', closeMobileMenu);
 
+                projectSearch.addEventListener('input', handleProjectSearch);
+                sortProjectsBtn.addEventListener('click', handleSortProjects);
+
+                // Context menu
+                contextMenu.querySelectorAll('.context-menu-item').forEach(item => {
+                    item.addEventListener('click', () => handleContextMenuAction(item.dataset.action));
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!contextMenu.contains(e.target)) {
+                        hideContextMenu();
+                    }
+                });
+
                 document.addEventListener('keydown', (e) => {
                     if (e.key === 'Escape') {
                         if (modalOverlay.classList.contains('active')) {
                             closeModal();
                         }
+                        hideContextMenu();
                         closeMobileMenu();
                     }
                 });
