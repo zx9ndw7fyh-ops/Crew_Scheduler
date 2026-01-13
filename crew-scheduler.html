@@ -1,0 +1,1673 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wicks Construction</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #1e1e1e;
+            --bg-secondary: #2d2d2d;
+            --bg-tertiary: #3a3a3a;
+            --bg-hover: #454545;
+            --text-primary: #e8e8e8;
+            --text-secondary: #a0a0a0;
+            --text-muted: #707070;
+            --accent: #d97706;
+            --accent-hover: #f59e0b;
+            --accent-muted: #92400e;
+            --card-bg: #3d3d3d;
+            --card-hover: #4a4a4a;
+            --border: #404040;
+            --border-light: #505050;
+            --shadow: rgba(0, 0, 0, 0.3);
+            --drop-highlight: rgba(217, 119, 6, 0.3);
+            --danger: #dc2626;
+            --danger-hover: #ef4444;
+            --project-accent: #6366f1;
+            --equipment-accent: #f97316;
+            --equipment-bg: #432006;
+            --equipment-hover: #5a2d0a;
+            --comment-color: #22d3ee;
+            --reorder-highlight: rgba(99, 102, 241, 0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f3f4f6;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #e5e7eb;
+            --bg-hover: #d1d5db;
+            --text-primary: #1f2937;
+            --text-secondary: #4b5563;
+            --text-muted: #9ca3af;
+            --accent: #d97706;
+            --accent-hover: #b45309;
+            --accent-muted: #fcd34d;
+            --card-bg: #e0e7ff;
+            --card-hover: #c7d2fe;
+            --border: #d1d5db;
+            --border-light: #e5e7eb;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --drop-highlight: rgba(217, 119, 6, 0.2);
+            --danger: #dc2626;
+            --danger-hover: #b91c1c;
+            --project-accent: #6366f1;
+            --equipment-accent: #f97316;
+            --equipment-bg: #fed7aa;
+            --equipment-hover: #fdba74;
+            --comment-color: #0891b2;
+            --reorder-highlight: rgba(99, 102, 241, 0.2);
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .date-picker-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .date-picker-group label {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+        }
+
+        .date-picker {
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-size: 0.8125rem;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        .date-picker:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .today-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            transition: all 0.15s ease;
+        }
+
+        .today-btn:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        .view-toggle {
+            display: flex;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .view-toggle button {
+            padding: 6px 14px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            transition: all 0.15s ease;
+        }
+
+        .view-toggle button:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .view-toggle button.active {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .theme-toggle {
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 0.8125rem;
+            transition: all 0.15s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--bg-hover);
+            border-color: var(--border-light);
+        }
+
+        /* Main Layout */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 57px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 220px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+
+        .sidebar-section {
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-section:last-child {
+            border-bottom: none;
+        }
+
+        .sidebar-header {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: var(--bg-secondary);
+            z-index: 5;
+        }
+
+        .sidebar-header h2 {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+        }
+
+        .sidebar-content {
+            padding: 10px;
+            min-height: 80px;
+        }
+
+        .item-library {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-height: 60px;
+        }
+
+        .item-library.drag-over {
+            background: var(--drop-highlight);
+            border-radius: 6px;
+        }
+
+        .item-library.reorder-target {
+            background: var(--reorder-highlight);
+            border-radius: 6px;
+        }
+
+        /* Add Buttons */
+        .add-btn {
+            width: 24px;
+            height: 24px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1.125rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+        }
+
+        .add-btn:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        /* Schedule Grid Container */
+        .schedule-container {
+            flex: 1;
+            overflow: auto;
+            padding: 12px;
+        }
+
+        .schedule-grid {
+            display: grid;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            min-width: fit-content;
+        }
+
+        /* Grid Header */
+        .grid-header {
+            display: contents;
+        }
+
+        .grid-header-cell {
+            background: var(--bg-tertiary);
+            padding: 10px 6px;
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        .grid-header-cell:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 10;
+            background: var(--bg-tertiary);
+        }
+
+        .grid-header-cell:last-child {
+            border-right: none;
+        }
+
+        /* Grid Rows */
+        .grid-row {
+            display: contents;
+        }
+
+        .foreman-cell {
+            background: var(--bg-secondary);
+            padding: 6px 10px;
+            font-weight: 500;
+            font-size: 0.8125rem;
+            border-bottom: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            position: sticky;
+            left: 0;
+            z-index: 5;
+            min-width: 140px;
+        }
+
+        .foreman-cell.reorder-target {
+            background: var(--reorder-highlight);
+        }
+
+        .foreman-drag-handle {
+            cursor: grab;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            padding: 2px;
+            opacity: 0.5;
+            transition: opacity 0.15s ease;
+        }
+
+        .foreman-cell:hover .foreman-drag-handle {
+            opacity: 1;
+        }
+
+        .foreman-drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .foreman-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .foreman-delete {
+            opacity: 0;
+            padding: 2px 5px;
+            border: none;
+            border-radius: 3px;
+            background: var(--danger);
+            color: #fff;
+            cursor: pointer;
+            font-size: 0.6875rem;
+            transition: opacity 0.15s ease;
+        }
+
+        .foreman-cell:hover .foreman-delete {
+            opacity: 1;
+        }
+
+        .foreman-delete:hover {
+            background: var(--danger-hover);
+        }
+
+        /* Schedule Cells */
+        .schedule-cell {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            padding: 3px;
+            min-height: 60px;
+            min-width: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            transition: background 0.15s ease;
+        }
+
+        .schedule-cell:last-child {
+            border-right: none;
+        }
+
+        .grid-row:last-child .schedule-cell,
+        .grid-row:last-child .foreman-cell {
+            border-bottom: none;
+        }
+
+        .schedule-cell.drag-over {
+            background: var(--drop-highlight);
+        }
+
+        /* Item Cards (Projects & Equipment) */
+        .item-card {
+            background: var(--card-bg);
+            border-radius: 4px;
+            padding: 5px 8px;
+            font-size: 0.75rem;
+            cursor: grab;
+            user-select: none;
+            box-shadow: 0 1px 2px var(--shadow);
+            border-left: 3px solid var(--project-accent);
+            transition: all 0.15s ease;
+            position: relative;
+        }
+
+        .item-card:hover {
+            background: var(--card-hover);
+            box-shadow: 0 2px 4px var(--shadow);
+        }
+
+        .item-card:active {
+            cursor: grabbing;
+        }
+
+        .item-card.dragging {
+            opacity: 0.5;
+        }
+
+        .item-card.reorder-target {
+            border-top: 2px solid var(--project-accent);
+        }
+
+        .item-card.equipment {
+            border-left-color: var(--equipment-accent);
+            background: var(--equipment-bg);
+        }
+
+        .item-card.equipment:hover {
+            background: var(--equipment-hover);
+        }
+
+        .item-card.equipment.reorder-target {
+            border-top-color: var(--equipment-accent);
+        }
+
+        .item-card-name {
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            padding-right: 14px;
+        }
+
+        .item-card-comment {
+            font-size: 0.6875rem;
+            color: var(--comment-color);
+            margin-top: 2px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-style: italic;
+        }
+
+        .item-card-notes {
+            font-size: 0.6875rem;
+            color: var(--text-secondary);
+            margin-top: 1px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .item-card-delete {
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            width: 14px;
+            height: 14px;
+            border: none;
+            border-radius: 2px;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: all 0.15s ease;
+        }
+
+        .item-card:hover .item-card-delete {
+            opacity: 1;
+        }
+
+        .item-card-delete:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        /* Tooltip for notes */
+        .item-card[data-notes]:hover::after {
+            content: attr(data-notes);
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 0.6875rem;
+            color: var(--text-secondary);
+            white-space: pre-wrap;
+            max-width: 180px;
+            z-index: 100;
+            box-shadow: 0 2px 8px var(--shadow);
+            margin-bottom: 4px;
+        }
+
+        /* Add Foreman Row */
+        .add-foreman-row {
+            padding: 10px 12px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+        }
+
+        .add-foreman-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border: 1px dashed var(--border);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.8125rem;
+            width: 100%;
+            transition: all 0.15s ease;
+        }
+
+        .add-foreman-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--drop-highlight);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+            padding: 16px;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 20px;
+            width: 100%;
+            max-width: 340px;
+            box-shadow: 0 4px 20px var(--shadow);
+            transform: translateY(-20px);
+            transition: transform 0.2s ease;
+        }
+
+        .modal-overlay.active .modal {
+            transform: translateY(0);
+        }
+
+        .modal h3 {
+            margin-bottom: 14px;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .modal-field {
+            margin-bottom: 14px;
+        }
+
+        .modal-field label {
+            display: block;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .modal-field input,
+        .modal-field textarea {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-size: 0.8125rem;
+            font-family: inherit;
+        }
+
+        .modal-field input:focus,
+        .modal-field textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .modal-field textarea {
+            resize: vertical;
+            min-height: 70px;
+        }
+
+        .modal-field.comment-field input {
+            color: var(--comment-color);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .modal-btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .modal-btn-secondary:hover {
+            background: var(--bg-hover);
+        }
+
+        .modal-btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .modal-btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        /* Empty States */
+        .empty-state {
+            text-align: center;
+            padding: 16px 12px;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        /* Mobile Menu Toggle */
+        .mobile-menu-toggle {
+            display: none;
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 0.8125rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .header {
+                padding: 10px 14px;
+            }
+
+            .header h1 {
+                font-size: 1.125rem;
+            }
+
+            .date-picker-group label {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 57px;
+                bottom: 0;
+                z-index: 50;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                width: 240px;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                top: 57px;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 45;
+            }
+
+            .sidebar-overlay.open {
+                display: block;
+            }
+
+            .main-container {
+                height: calc(100vh - 57px);
+            }
+
+            .schedule-container {
+                padding: 8px;
+            }
+
+            .schedule-cell {
+                min-width: 80px;
+                min-height: 50px;
+            }
+
+            .foreman-cell {
+                min-width: 100px;
+                padding: 5px 8px;
+                font-size: 0.75rem;
+            }
+
+            .grid-header-cell {
+                padding: 8px 4px;
+                font-size: 0.6875rem;
+            }
+
+            .item-card {
+                font-size: 0.6875rem;
+                padding: 4px 6px;
+            }
+
+            .add-foreman-row {
+                padding: 8px 10px;
+            }
+
+            .view-toggle button {
+                padding: 5px 10px;
+                font-size: 0.75rem;
+            }
+
+            .header-controls {
+                gap: 8px;
+            }
+
+            .today-btn {
+                padding: 5px 10px;
+                font-size: 0.75rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 8px 10px;
+            }
+
+            .header h1 {
+                font-size: 1rem;
+            }
+
+            .date-picker {
+                padding: 5px 8px;
+                font-size: 0.75rem;
+            }
+
+            .theme-toggle {
+                padding: 5px 8px;
+                font-size: 0.75rem;
+            }
+
+            .schedule-cell {
+                min-width: 70px;
+            }
+
+            .foreman-cell {
+                min-width: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>Wicks Construction</h1>
+        <div class="header-controls">
+            <button class="mobile-menu-toggle" id="mobileMenuToggle">Menu</button>
+            <div class="date-picker-group">
+                <label for="startDate">Week of:</label>
+                <input type="date" class="date-picker" id="startDate">
+                <button class="today-btn" id="todayBtn">Today</button>
+            </div>
+            <div class="view-toggle">
+                <button data-view="1" title="1 Week View">1W</button>
+                <button data-view="4" class="active" title="4 Weeks View">4W</button>
+                <button data-view="52" title="Year View">52W</button>
+            </div>
+            <button class="theme-toggle" id="themeToggle">Light</button>
+        </div>
+    </header>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="main-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-header">
+                    <h2>Projects</h2>
+                    <button class="add-btn" id="addProjectBtn" title="Add Project">+</button>
+                </div>
+                <div class="sidebar-content">
+                    <div class="item-library" id="projectLibrary" data-type="project">
+                        <div class="empty-state">No projects yet</div>
+                    </div>
+                </div>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-header">
+                    <h2>Equipment</h2>
+                    <button class="add-btn" id="addEquipmentBtn" title="Add Equipment">+</button>
+                </div>
+                <div class="sidebar-content">
+                    <div class="item-library" id="equipmentLibrary" data-type="equipment">
+                        <div class="empty-state">No equipment yet</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="schedule-container">
+            <div class="schedule-grid" id="scheduleGrid">
+                <!-- Grid will be rendered by JavaScript -->
+            </div>
+            <div class="add-foreman-row">
+                <button class="add-foreman-btn" id="addForemanBtn">
+                    <span>+</span>
+                    <span>Add Foreman</span>
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for adding/editing -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <h3 id="modalTitle">Add Project</h3>
+            <form id="modalForm">
+                <div class="modal-field">
+                    <label for="modalName">Name</label>
+                    <input type="text" id="modalName" required>
+                </div>
+                <div class="modal-field" id="notesField">
+                    <label for="modalNotes">Notes (optional)</label>
+                    <textarea id="modalNotes" placeholder="Add any additional details..."></textarea>
+                </div>
+                <div class="modal-field comment-field" id="commentField">
+                    <label for="modalComment">Comment (optional)</label>
+                    <input type="text" id="modalComment" placeholder="Add a comment for this assignment...">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="modal-btn modal-btn-secondary" id="modalCancel">Cancel</button>
+                    <button type="submit" class="modal-btn modal-btn-primary" id="modalSubmit">Add</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // State
+            let state = {
+                foremen: [],
+                projects: [],
+                equipment: [],
+                assignments: [],   // { id, itemId, itemType, foremanId, weekKey, comment }
+                startDate: getMonday(new Date()),
+                settings: {
+                    viewMode: 4,
+                    theme: 'dark'
+                }
+            };
+
+            // DOM Elements
+            const scheduleGrid = document.getElementById('scheduleGrid');
+            const projectLibrary = document.getElementById('projectLibrary');
+            const equipmentLibrary = document.getElementById('equipmentLibrary');
+            const addProjectBtn = document.getElementById('addProjectBtn');
+            const addEquipmentBtn = document.getElementById('addEquipmentBtn');
+            const addForemanBtn = document.getElementById('addForemanBtn');
+            const themeToggle = document.getElementById('themeToggle');
+            const viewToggle = document.querySelectorAll('.view-toggle button');
+            const startDatePicker = document.getElementById('startDate');
+            const todayBtn = document.getElementById('todayBtn');
+            const modalOverlay = document.getElementById('modalOverlay');
+            const modalForm = document.getElementById('modalForm');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalName = document.getElementById('modalName');
+            const modalNotes = document.getElementById('modalNotes');
+            const modalComment = document.getElementById('modalComment');
+            const modalCancel = document.getElementById('modalCancel');
+            const modalSubmit = document.getElementById('modalSubmit');
+            const notesField = document.getElementById('notesField');
+            const commentField = document.getElementById('commentField');
+            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+            let modalMode = null;
+            let editingItemId = null;
+            let editingItemType = null;
+            let editingAssignmentId = null;
+
+            // Reorder state
+            let reorderDragType = null; // 'foreman', 'project', 'equipment'
+            let reorderDragId = null;
+
+            // Utility Functions
+            function generateId() {
+                return Date.now().toString(36) + Math.random().toString(36).substr(2);
+            }
+
+            function getMonday(date) {
+                const d = new Date(date);
+                const day = d.getDay();
+                const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+                d.setDate(diff);
+                d.setHours(0, 0, 0, 0);
+                return d;
+            }
+
+            function formatWeekHeader(date) {
+                const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                const month = date.getMonth() + 1;
+                const day = date.getDate();
+                const dayName = days[date.getDay()];
+                return `${month}/${day} ${dayName}`;
+            }
+
+            function getWeekKey(date) {
+                const d = getMonday(new Date(date));
+                return d.toISOString().split('T')[0];
+            }
+
+            function formatDateForInput(date) {
+                return date.toISOString().split('T')[0];
+            }
+
+            // Data Persistence
+            function saveData() {
+                localStorage.setItem('wicksSchedule', JSON.stringify(state));
+            }
+
+            function loadData() {
+                const saved = localStorage.getItem('wicksSchedule');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    state = {
+                        ...state,
+                        ...parsed,
+                        startDate: new Date(parsed.startDate || getMonday(new Date()))
+                    };
+                    state.projects = state.projects || [];
+                    state.equipment = state.equipment || [];
+                    state.assignments = state.assignments || [];
+                    state.foremen = state.foremen || [];
+                }
+            }
+
+            // Render Functions
+            function render() {
+                renderGrid();
+                renderLibrary('project');
+                renderLibrary('equipment');
+                updateThemeButton();
+                updateDatePicker();
+            }
+
+            function renderGrid() {
+                const weeks = state.settings.viewMode;
+
+                scheduleGrid.style.gridTemplateColumns = `140px repeat(${weeks}, minmax(100px, 1fr))`;
+
+                let html = '';
+
+                // Header row
+                html += '<div class="grid-header">';
+                html += '<div class="grid-header-cell">Foreman</div>';
+                for (let i = 0; i < weeks; i++) {
+                    const weekDate = new Date(state.startDate);
+                    weekDate.setDate(weekDate.getDate() + (i * 7));
+                    html += `<div class="grid-header-cell">${formatWeekHeader(weekDate)}</div>`;
+                }
+                html += '</div>';
+
+                // Foreman rows
+                if (state.foremen.length === 0) {
+                    html += `
+                        <div class="grid-row">
+                            <div class="foreman-cell" style="grid-column: 1 / -1; justify-content: center;">
+                                <span class="empty-state">No foremen added yet. Click "Add Foreman" below.</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    state.foremen.forEach((foreman, index) => {
+                        html += '<div class="grid-row">';
+                        html += `
+                            <div class="foreman-cell" data-foreman-id="${foreman.id}" data-foreman-index="${index}">
+                                <span class="foreman-drag-handle" draggable="true" data-foreman-id="${foreman.id}">&#9776;</span>
+                                <span class="foreman-name">${escapeHtml(foreman.name)}</span>
+                                <button class="foreman-delete" data-foreman-id="${foreman.id}" title="Delete">×</button>
+                            </div>
+                        `;
+
+                        for (let i = 0; i < weeks; i++) {
+                            const weekDate = new Date(state.startDate);
+                            weekDate.setDate(weekDate.getDate() + (i * 7));
+                            const weekKey = getWeekKey(weekDate);
+                            const cellAssignments = getAssignmentsForCell(foreman.id, weekKey);
+
+                            html += `
+                                <div class="schedule-cell" data-foreman-id="${foreman.id}" data-week="${weekKey}">
+                                    ${cellAssignments.map(a => renderAssignmentCard(a)).join('')}
+                                </div>
+                            `;
+                        }
+                        html += '</div>';
+                    });
+                }
+
+                scheduleGrid.innerHTML = html;
+                attachCellEventListeners();
+            }
+
+            function renderLibrary(type) {
+                const library = type === 'project' ? projectLibrary : equipmentLibrary;
+                const items = type === 'project' ? state.projects : state.equipment;
+
+                if (items.length === 0) {
+                    library.innerHTML = `<div class="empty-state">No ${type}s yet</div>`;
+                } else {
+                    library.innerHTML = items.map((item, index) => renderLibraryCard(item, type, index)).join('');
+                }
+
+                attachLibraryEventListeners(type);
+            }
+
+            function renderLibraryCard(item, type, index) {
+                const notesAttr = item.notes ? `data-notes="${escapeHtml(item.notes)}"` : '';
+                const typeClass = type === 'equipment' ? 'equipment' : '';
+                return `
+                    <div class="item-card ${typeClass}" draggable="true" data-item-id="${item.id}" data-item-type="${type}" data-item-index="${index}" ${notesAttr}>
+                        <span class="item-card-name">${escapeHtml(item.name)}</span>
+                        ${item.notes ? `<div class="item-card-notes">${escapeHtml(item.notes)}</div>` : ''}
+                        <button class="item-card-delete" data-item-id="${item.id}" data-item-type="${type}" title="Delete">×</button>
+                    </div>
+                `;
+            }
+
+            function renderAssignmentCard(assignment) {
+                const item = getItemById(assignment.itemId, assignment.itemType);
+                if (!item) return '';
+
+                const notesAttr = item.notes ? `data-notes="${escapeHtml(item.notes)}"` : '';
+                const typeClass = assignment.itemType === 'equipment' ? 'equipment' : '';
+                return `
+                    <div class="item-card ${typeClass}" draggable="true" data-assignment-id="${assignment.id}" data-item-type="${assignment.itemType}" ${notesAttr}>
+                        <span class="item-card-name">${escapeHtml(item.name)}</span>
+                        ${assignment.comment ? `<div class="item-card-comment">${escapeHtml(assignment.comment)}</div>` : ''}
+                        <button class="item-card-delete" data-assignment-id="${assignment.id}" title="Remove">×</button>
+                    </div>
+                `;
+            }
+
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            function getItemById(itemId, itemType) {
+                const items = itemType === 'project' ? state.projects : state.equipment;
+                return items.find(i => i.id === itemId);
+            }
+
+            function getAssignmentsForCell(foremanId, weekKey) {
+                return state.assignments.filter(a =>
+                    a.foremanId === foremanId && a.weekKey === weekKey
+                );
+            }
+
+            function updateThemeButton() {
+                themeToggle.textContent = state.settings.theme === 'dark' ? 'Light' : 'Dark';
+            }
+
+            function updateDatePicker() {
+                startDatePicker.value = formatDateForInput(state.startDate);
+            }
+
+            // Event Listeners
+            function attachCellEventListeners() {
+                document.querySelectorAll('.schedule-cell').forEach(cell => {
+                    cell.addEventListener('dragover', handleDragOver);
+                    cell.addEventListener('dragleave', handleDragLeave);
+                    cell.addEventListener('drop', handleDrop);
+                });
+
+                document.querySelectorAll('.schedule-cell .item-card').forEach(card => {
+                    card.addEventListener('dragstart', handleAssignmentDragStart);
+                    card.addEventListener('dragend', handleDragEnd);
+                    card.addEventListener('click', handleAssignmentCardClick);
+                });
+
+                document.querySelectorAll('.schedule-cell .item-card-delete').forEach(btn => {
+                    btn.addEventListener('click', handleRemoveAssignment);
+                });
+
+                document.querySelectorAll('.foreman-delete').forEach(btn => {
+                    btn.addEventListener('click', handleDeleteForeman);
+                });
+
+                // Foreman reorder
+                document.querySelectorAll('.foreman-drag-handle').forEach(handle => {
+                    handle.addEventListener('dragstart', handleForemanReorderStart);
+                    handle.addEventListener('dragend', handleReorderEnd);
+                });
+
+                document.querySelectorAll('.foreman-cell').forEach(cell => {
+                    cell.addEventListener('dragover', handleForemanReorderOver);
+                    cell.addEventListener('dragleave', handleForemanReorderLeave);
+                    cell.addEventListener('drop', handleForemanReorderDrop);
+                });
+            }
+
+            function attachLibraryEventListeners(type) {
+                const library = type === 'project' ? projectLibrary : equipmentLibrary;
+
+                library.addEventListener('dragover', handleLibraryDragOver);
+                library.addEventListener('dragleave', handleLibraryDragLeave);
+                library.addEventListener('drop', handleLibraryDrop);
+
+                library.querySelectorAll('.item-card').forEach(card => {
+                    card.addEventListener('dragstart', handleLibraryDragStart);
+                    card.addEventListener('dragend', handleDragEnd);
+                    card.addEventListener('click', handleLibraryCardClick);
+                    card.addEventListener('dragover', handleLibraryItemReorderOver);
+                    card.addEventListener('dragleave', handleLibraryItemReorderLeave);
+                    card.addEventListener('drop', handleLibraryItemReorderDrop);
+                });
+
+                library.querySelectorAll('.item-card-delete').forEach(btn => {
+                    btn.addEventListener('click', handleDeleteItem);
+                });
+            }
+
+            // Foreman reorder handlers
+            function handleForemanReorderStart(e) {
+                e.stopPropagation();
+                reorderDragType = 'foreman';
+                reorderDragId = e.target.dataset.foremanId;
+                e.dataTransfer.setData('text/plain', 'foreman-reorder');
+                e.dataTransfer.effectAllowed = 'move';
+            }
+
+            function handleForemanReorderOver(e) {
+                if (reorderDragType !== 'foreman') return;
+                e.preventDefault();
+                e.currentTarget.classList.add('reorder-target');
+            }
+
+            function handleForemanReorderLeave(e) {
+                e.currentTarget.classList.remove('reorder-target');
+            }
+
+            function handleForemanReorderDrop(e) {
+                e.preventDefault();
+                e.currentTarget.classList.remove('reorder-target');
+
+                if (reorderDragType !== 'foreman') return;
+
+                const targetId = e.currentTarget.dataset.foremanId;
+                if (!targetId || targetId === reorderDragId) return;
+
+                const fromIndex = state.foremen.findIndex(f => f.id === reorderDragId);
+                const toIndex = state.foremen.findIndex(f => f.id === targetId);
+
+                if (fromIndex !== -1 && toIndex !== -1) {
+                    const [moved] = state.foremen.splice(fromIndex, 1);
+                    state.foremen.splice(toIndex, 0, moved);
+                    saveData();
+                    render();
+                }
+            }
+
+            function handleReorderEnd() {
+                reorderDragType = null;
+                reorderDragId = null;
+                document.querySelectorAll('.reorder-target').forEach(el => el.classList.remove('reorder-target'));
+            }
+
+            // Library item reorder handlers
+            function handleLibraryItemReorderOver(e) {
+                const dragType = e.currentTarget.dataset.itemType;
+                if (reorderDragType !== dragType) return;
+                e.preventDefault();
+                e.stopPropagation();
+                e.currentTarget.classList.add('reorder-target');
+            }
+
+            function handleLibraryItemReorderLeave(e) {
+                e.currentTarget.classList.remove('reorder-target');
+            }
+
+            function handleLibraryItemReorderDrop(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.currentTarget.classList.remove('reorder-target');
+
+                const targetType = e.currentTarget.dataset.itemType;
+                if (reorderDragType !== targetType) return;
+
+                const targetId = e.currentTarget.dataset.itemId;
+                if (!targetId || targetId === reorderDragId) return;
+
+                const items = targetType === 'project' ? state.projects : state.equipment;
+                const fromIndex = items.findIndex(i => i.id === reorderDragId);
+                const toIndex = items.findIndex(i => i.id === targetId);
+
+                if (fromIndex !== -1 && toIndex !== -1) {
+                    const [moved] = items.splice(fromIndex, 1);
+                    items.splice(toIndex, 0, moved);
+                    saveData();
+                    render();
+                }
+            }
+
+            // Drag from library (creates copy OR reorder)
+            function handleLibraryDragStart(e) {
+                const itemType = e.target.dataset.itemType;
+                const itemId = e.target.dataset.itemId;
+
+                // Set as reorder if dragging within library
+                reorderDragType = itemType;
+                reorderDragId = itemId;
+
+                e.target.classList.add('dragging');
+                e.dataTransfer.setData('application/json', JSON.stringify({
+                    source: 'library',
+                    itemId: itemId,
+                    itemType: itemType
+                }));
+                e.dataTransfer.effectAllowed = 'copyMove';
+            }
+
+            // Drag from grid (moves assignment)
+            function handleAssignmentDragStart(e) {
+                reorderDragType = null;
+                reorderDragId = null;
+                e.target.classList.add('dragging');
+                e.dataTransfer.setData('application/json', JSON.stringify({
+                    source: 'grid',
+                    assignmentId: e.target.dataset.assignmentId,
+                    itemType: e.target.dataset.itemType
+                }));
+                e.dataTransfer.effectAllowed = 'move';
+            }
+
+            function handleDragEnd(e) {
+                e.target.classList.remove('dragging');
+                document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+                document.querySelectorAll('.reorder-target').forEach(el => el.classList.remove('reorder-target'));
+                reorderDragType = null;
+                reorderDragId = null;
+            }
+
+            function handleDragOver(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'copy';
+                e.currentTarget.classList.add('drag-over');
+            }
+
+            function handleDragLeave(e) {
+                e.currentTarget.classList.remove('drag-over');
+            }
+
+            function handleDrop(e) {
+                e.preventDefault();
+                e.currentTarget.classList.remove('drag-over');
+
+                const foremanId = e.currentTarget.dataset.foremanId;
+                const weekKey = e.currentTarget.dataset.week;
+
+                try {
+                    const data = JSON.parse(e.dataTransfer.getData('application/json'));
+
+                    if (data.source === 'library') {
+                        state.assignments.push({
+                            id: generateId(),
+                            itemId: data.itemId,
+                            itemType: data.itemType,
+                            foremanId: foremanId,
+                            weekKey: weekKey,
+                            comment: null
+                        });
+                    } else if (data.source === 'grid') {
+                        const assignment = state.assignments.find(a => a.id === data.assignmentId);
+                        if (assignment) {
+                            assignment.foremanId = foremanId;
+                            assignment.weekKey = weekKey;
+                        }
+                    }
+
+                    saveData();
+                    render();
+                } catch (err) {
+                    console.error('Drop error:', err);
+                }
+            }
+
+            function handleLibraryDragOver(e) {
+                // Don't show drop zone if this is a library reorder
+                if (reorderDragType) return;
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                e.currentTarget.classList.add('drag-over');
+            }
+
+            function handleLibraryDragLeave(e) {
+                e.currentTarget.classList.remove('drag-over');
+            }
+
+            function handleLibraryDrop(e) {
+                e.preventDefault();
+                e.currentTarget.classList.remove('drag-over');
+
+                // If this was a library reorder, ignore
+                if (reorderDragType) return;
+
+                try {
+                    const data = JSON.parse(e.dataTransfer.getData('application/json'));
+                    if (data.source === 'grid' && data.assignmentId) {
+                        state.assignments = state.assignments.filter(a => a.id !== data.assignmentId);
+                        saveData();
+                        render();
+                    }
+                } catch (err) {
+                    console.error('Library drop error:', err);
+                }
+            }
+
+            // Click handlers
+            function handleLibraryCardClick(e) {
+                if (e.target.classList.contains('item-card-delete')) return;
+
+                const itemId = e.currentTarget.dataset.itemId;
+                const itemType = e.currentTarget.dataset.itemType;
+                const items = itemType === 'project' ? state.projects : state.equipment;
+                const item = items.find(i => i.id === itemId);
+
+                if (item) {
+                    openModal(`edit-${itemType}`, item);
+                }
+            }
+
+            function handleAssignmentCardClick(e) {
+                if (e.target.classList.contains('item-card-delete')) return;
+
+                const assignmentId = e.currentTarget.dataset.assignmentId;
+                const assignment = state.assignments.find(a => a.id === assignmentId);
+
+                if (assignment) {
+                    openModal('edit-assignment', assignment);
+                }
+            }
+
+            // Delete Handlers
+            function handleDeleteItem(e) {
+                e.stopPropagation();
+                const itemId = e.currentTarget.dataset.itemId;
+                const itemType = e.currentTarget.dataset.itemType;
+
+                if (confirm(`Delete this ${itemType}? It will also be removed from all assignments.`)) {
+                    if (itemType === 'project') {
+                        state.projects = state.projects.filter(p => p.id !== itemId);
+                    } else {
+                        state.equipment = state.equipment.filter(eq => eq.id !== itemId);
+                    }
+                    state.assignments = state.assignments.filter(a => !(a.itemId === itemId && a.itemType === itemType));
+                    saveData();
+                    render();
+                }
+            }
+
+            function handleRemoveAssignment(e) {
+                e.stopPropagation();
+                const assignmentId = e.currentTarget.dataset.assignmentId;
+                state.assignments = state.assignments.filter(a => a.id !== assignmentId);
+                saveData();
+                render();
+            }
+
+            function handleDeleteForeman(e) {
+                const foremanId = e.currentTarget.dataset.foremanId;
+                const foreman = state.foremen.find(f => f.id === foremanId);
+                if (confirm(`Delete foreman "${foreman.name}"? All their assignments will be removed.`)) {
+                    state.assignments = state.assignments.filter(a => a.foremanId !== foremanId);
+                    state.foremen = state.foremen.filter(f => f.id !== foremanId);
+                    saveData();
+                    render();
+                }
+            }
+
+            // Modal Handlers
+            function openModal(mode, data = null) {
+                modalMode = mode;
+                modalOverlay.classList.add('active');
+                editingItemId = null;
+                editingItemType = null;
+                editingAssignmentId = null;
+
+                // Reset fields
+                modalComment.value = '';
+                commentField.style.display = 'none';
+                notesField.style.display = 'block';
+
+                if (mode === 'add-project') {
+                    modalTitle.textContent = 'Add Project';
+                    modalSubmit.textContent = 'Add';
+                    modalName.value = '';
+                    modalNotes.value = '';
+                    editingItemType = 'project';
+                } else if (mode === 'edit-project') {
+                    modalTitle.textContent = 'Edit Project';
+                    modalSubmit.textContent = 'Save';
+                    modalName.value = data.name;
+                    modalNotes.value = data.notes || '';
+                    editingItemId = data.id;
+                    editingItemType = 'project';
+                } else if (mode === 'add-equipment') {
+                    modalTitle.textContent = 'Add Equipment';
+                    modalSubmit.textContent = 'Add';
+                    modalName.value = '';
+                    modalNotes.value = '';
+                    editingItemType = 'equipment';
+                } else if (mode === 'edit-equipment') {
+                    modalTitle.textContent = 'Edit Equipment';
+                    modalSubmit.textContent = 'Save';
+                    modalName.value = data.name;
+                    modalNotes.value = data.notes || '';
+                    editingItemId = data.id;
+                    editingItemType = 'equipment';
+                } else if (mode === 'add-foreman') {
+                    modalTitle.textContent = 'Add Foreman';
+                    modalSubmit.textContent = 'Add';
+                    modalName.value = '';
+                    notesField.style.display = 'none';
+                } else if (mode === 'edit-assignment') {
+                    const item = getItemById(data.itemId, data.itemType);
+                    modalTitle.textContent = `Edit: ${item ? item.name : 'Assignment'}`;
+                    modalSubmit.textContent = 'Save';
+                    modalName.value = item ? item.name : '';
+                    modalName.disabled = true;
+                    modalNotes.value = item && item.notes ? item.notes : '';
+                    notesField.style.display = 'none';
+                    commentField.style.display = 'block';
+                    modalComment.value = data.comment || '';
+                    editingAssignmentId = data.id;
+                }
+
+                setTimeout(() => {
+                    if (mode === 'edit-assignment') {
+                        modalComment.focus();
+                    } else {
+                        modalName.focus();
+                    }
+                }, 100);
+            }
+
+            function closeModal() {
+                modalOverlay.classList.remove('active');
+                modalMode = null;
+                editingItemId = null;
+                editingItemType = null;
+                editingAssignmentId = null;
+                modalName.disabled = false;
+            }
+
+            function handleModalSubmit(e) {
+                e.preventDefault();
+
+                if (modalMode === 'edit-assignment') {
+                    const assignment = state.assignments.find(a => a.id === editingAssignmentId);
+                    if (assignment) {
+                        assignment.comment = modalComment.value.trim() || null;
+                    }
+                    saveData();
+                    render();
+                    closeModal();
+                    return;
+                }
+
+                const name = modalName.value.trim();
+                if (!name) return;
+
+                if (modalMode === 'add-project') {
+                    state.projects.push({
+                        id: generateId(),
+                        name: name,
+                        notes: modalNotes.value.trim() || null
+                    });
+                } else if (modalMode === 'edit-project') {
+                    const project = state.projects.find(p => p.id === editingItemId);
+                    if (project) {
+                        project.name = name;
+                        project.notes = modalNotes.value.trim() || null;
+                    }
+                } else if (modalMode === 'add-equipment') {
+                    state.equipment.push({
+                        id: generateId(),
+                        name: name,
+                        notes: modalNotes.value.trim() || null
+                    });
+                } else if (modalMode === 'edit-equipment') {
+                    const equip = state.equipment.find(eq => eq.id === editingItemId);
+                    if (equip) {
+                        equip.name = name;
+                        equip.notes = modalNotes.value.trim() || null;
+                    }
+                } else if (modalMode === 'add-foreman') {
+                    state.foremen.push({
+                        id: generateId(),
+                        name: name
+                    });
+                }
+
+                saveData();
+                render();
+                closeModal();
+            }
+
+            // Theme Toggle
+            function toggleTheme() {
+                state.settings.theme = state.settings.theme === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', state.settings.theme);
+                saveData();
+                updateThemeButton();
+            }
+
+            // View Mode Toggle
+            function setViewMode(weeks) {
+                state.settings.viewMode = parseInt(weeks);
+                viewToggle.forEach(btn => {
+                    btn.classList.toggle('active', parseInt(btn.dataset.view) === state.settings.viewMode);
+                });
+                saveData();
+                renderGrid();
+            }
+
+            // Date Picker Handler
+            function handleDateChange(e) {
+                const selectedDate = new Date(e.target.value + 'T00:00:00');
+                state.startDate = getMonday(selectedDate);
+                saveData();
+                render();
+            }
+
+            // Today Button Handler
+            function goToToday() {
+                state.startDate = getMonday(new Date());
+                saveData();
+                render();
+            }
+
+            // Mobile Menu Toggle
+            function toggleMobileMenu() {
+                sidebar.classList.toggle('open');
+                sidebarOverlay.classList.toggle('open');
+            }
+
+            function closeMobileMenu() {
+                sidebar.classList.remove('open');
+                sidebarOverlay.classList.remove('open');
+            }
+
+            // Initialize
+            function init() {
+                loadData();
+                document.documentElement.setAttribute('data-theme', state.settings.theme);
+
+                viewToggle.forEach(btn => {
+                    btn.classList.toggle('active', parseInt(btn.dataset.view) === state.settings.viewMode);
+                });
+
+                render();
+
+                // Event Listeners
+                addProjectBtn.addEventListener('click', () => openModal('add-project'));
+                addEquipmentBtn.addEventListener('click', () => openModal('add-equipment'));
+                addForemanBtn.addEventListener('click', () => openModal('add-foreman'));
+                themeToggle.addEventListener('click', toggleTheme);
+                startDatePicker.addEventListener('change', handleDateChange);
+                todayBtn.addEventListener('click', goToToday);
+                modalCancel.addEventListener('click', closeModal);
+                modalForm.addEventListener('submit', handleModalSubmit);
+                modalOverlay.addEventListener('click', (e) => {
+                    if (e.target === modalOverlay) closeModal();
+                });
+
+                viewToggle.forEach(btn => {
+                    btn.addEventListener('click', () => setViewMode(btn.dataset.view));
+                });
+
+                mobileMenuToggle.addEventListener('click', toggleMobileMenu);
+                sidebarOverlay.addEventListener('click', closeMobileMenu);
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        if (modalOverlay.classList.contains('active')) {
+                            closeModal();
+                        }
+                        closeMobileMenu();
+                    }
+                });
+            }
+
+            init();
+        })();
+    </script>
+</body>
+</html>
