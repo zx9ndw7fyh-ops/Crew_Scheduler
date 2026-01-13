@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Timeline - Wicks Construction</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #1e1e1e;
+            --bg-secondary: #2d2d2d;
+            --bg-tertiary: #3a3a3a;
+            --bg-hover: #454545;
+            --text-primary: #e8e8e8;
+            --text-secondary: #a0a0a0;
+            --text-muted: #707070;
+            --accent: #d97706;
+            --accent-hover: #f59e0b;
+            --border: #404040;
+            --border-light: #505050;
+            --shadow: rgba(0, 0, 0, 0.3);
+            --project-active: #6366f1;
+            --project-active-light: #818cf8;
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f3f4f6;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #e5e7eb;
+            --bg-hover: #d1d5db;
+            --text-primary: #1f2937;
+            --text-secondary: #4b5563;
+            --text-muted: #9ca3af;
+            --accent: #d97706;
+            --accent-hover: #b45309;
+            --border: #d1d5db;
+            --border-light: #e5e7eb;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --project-active: #6366f1;
+            --project-active-light: #a5b4fc;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.5;
+            overflow-x: auto;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            gap: 12px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .back-link {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .back-link:hover {
+            background: var(--bg-hover);
+            border-color: var(--border-light);
+        }
+
+        .theme-toggle {
+            padding: 8px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 1.125rem;
+            transition: all 0.2s;
+        }
+
+        .theme-toggle:hover {
+            background: var(--bg-hover);
+            border-color: var(--border-light);
+        }
+
+        /* Container */
+        .container {
+            padding: 20px;
+        }
+
+        .timeline-wrapper {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            overflow: auto;
+            box-shadow: 0 2px 8px var(--shadow);
+            max-height: calc(100vh - 180px);
+        }
+
+        /* Timeline Grid */
+        .timeline-grid {
+            display: inline-grid;
+            min-width: 100%;
+            grid-template-columns: auto repeat(52, 45px);
+            border-collapse: collapse;
+        }
+
+        .timeline-header,
+        .timeline-row {
+            display: contents;
+        }
+
+        .timeline-cell {
+            padding: 8px 4px;
+            border-right: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            font-size: 0.75rem;
+            text-align: center;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Header Cells */
+        .header-cell {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-bottom: 2px solid var(--border-light);
+        }
+
+        .header-cell.project-header {
+            justify-content: flex-start;
+            padding-left: 12px;
+            padding-right: 12px;
+            font-size: 0.875rem;
+            position: sticky;
+            left: 0;
+            z-index: 20;
+            white-space: nowrap;
+        }
+
+        .week-header {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            white-space: nowrap;
+            font-size: 0.7rem;
+        }
+
+        /* Project Name Cell */
+        .project-cell {
+            background: var(--bg-secondary);
+            justify-content: flex-start;
+            padding-left: 12px;
+            padding-right: 12px;
+            font-weight: 500;
+            position: sticky;
+            left: 0;
+            z-index: 5;
+            border-right: 2px solid var(--border-light);
+            white-space: nowrap;
+        }
+
+        /* Active Week Cells */
+        .week-cell {
+            background: var(--bg-secondary);
+            cursor: default;
+        }
+
+        .week-cell.active {
+            background: var(--project-active);
+            position: relative;
+        }
+
+        .week-cell.active::after {
+            content: '';
+            position: absolute;
+            inset: 2px;
+            background: var(--project-active-light);
+            border-radius: 2px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            grid-column: 1 / -1;
+            padding: 40px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .empty-state a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .empty-state a:hover {
+            text-decoration: underline;
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            gap: 20px;
+            padding: 16px 20px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            align-items: center;
+            font-size: 0.875rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-box {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            border: 1px solid var(--border);
+        }
+
+        .legend-box.active {
+            background: var(--project-active);
+        }
+
+        /* Year Navigation */
+        .year-nav {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .year-nav label {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .year-nav input {
+            padding: 6px 10px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .timeline-grid {
+                grid-template-columns: auto repeat(52, 40px);
+            }
+
+            .week-header {
+                font-size: 0.65rem;
+            }
+
+            .project-cell {
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <a href="crew-scheduler.html" class="back-link">
+                <span>←</span>
+                <span>Back to Schedule</span>
+            </a>
+            <h1>Project Timeline Overview</h1>
+        </div>
+        <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+            <span class="theme-icon">☀️</span>
+        </button>
+    </div>
+
+    <div class="year-nav">
+        <label for="yearSelect">Year:</label>
+        <input type="number" id="yearSelect" min="2020" max="2050" value="2025">
+    </div>
+
+    <div class="container">
+        <div class="timeline-wrapper">
+            <div class="timeline-grid" id="timelineGrid">
+                <!-- Grid will be generated by JavaScript -->
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-box active"></div>
+                <span>Project Active</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box"></div>
+                <span>No Activity</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // DOM Elements
+            const themeToggle = document.getElementById('themeToggle');
+            const yearSelect = document.getElementById('yearSelect');
+            const timelineGrid = document.getElementById('timelineGrid');
+
+            // State
+            let scheduleData = null;
+            let currentYear = new Date().getFullYear();
+
+            // Load data from localStorage (same storage as main page)
+            function loadScheduleData() {
+                try {
+                    const data = localStorage.getItem('wicksSchedule');
+                    if (data) {
+                        scheduleData = JSON.parse(data);
+                        return true;
+                    }
+                } catch (e) {
+                    console.error('Error loading data:', e);
+                }
+                return false;
+            }
+
+            // Get Monday of a given week
+            function getMonday(date) {
+                const d = new Date(date);
+                const day = d.getDay();
+                const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+                return new Date(d.setDate(diff));
+            }
+
+            // Format week key (YYYY-MM-DD)
+            function getWeekKey(date) {
+                const monday = getMonday(date);
+                const year = monday.getFullYear();
+                const month = String(monday.getMonth() + 1).padStart(2, '0');
+                const day = String(monday.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+
+            // Generate all weeks for a year
+            function getYearWeeks(year) {
+                const weeks = [];
+                const firstDay = new Date(year, 0, 1);
+                const firstMonday = getMonday(firstDay);
+                
+                for (let i = 0; i < 52; i++) {
+                    const weekDate = new Date(firstMonday);
+                    weekDate.setDate(weekDate.getDate() + (i * 7));
+                    weeks.push({
+                        date: weekDate,
+                        key: getWeekKey(weekDate),
+                        weekNumber: i + 1
+                    });
+                }
+                
+                return weeks;
+            }
+
+            // Format date for display
+            function formatWeekDate(date) {
+                const month = date.getMonth() + 1;
+                const day = date.getDate();
+                return `${month}/${day}`;
+            }
+
+            // Check if project is active in a given week
+            function isProjectActiveInWeek(projectId, weekKey) {
+                if (!scheduleData || !scheduleData.assignments) return false;
+                
+                return scheduleData.assignments.some(assignment => {
+                    return assignment.itemId === projectId && 
+                           assignment.itemType === 'project' &&
+                           assignment.weekKey === weekKey;
+                });
+            }
+
+            // Render the timeline grid
+            function renderTimeline() {
+                if (!scheduleData || !scheduleData.projects || scheduleData.projects.length === 0) {
+                    timelineGrid.innerHTML = `
+                        <div class="empty-state">
+                            <p>No projects found.</p>
+                            <p><a href="crew-scheduler.html">Add projects in the main scheduler</a></p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const weeks = getYearWeeks(currentYear);
+                let html = '';
+
+                // Header row
+                html += '<div class="timeline-header">';
+                html += '<div class="timeline-cell header-cell project-header">Project</div>';
+                weeks.forEach(week => {
+                    html += `<div class="timeline-cell header-cell"><div class="week-header">${formatWeekDate(week.date)}</div></div>`;
+                });
+                html += '</div>';
+
+                // Project rows
+                scheduleData.projects.forEach(project => {
+                    html += '<div class="timeline-row">';
+                    html += `<div class="timeline-cell project-cell">${escapeHtml(project.name)}</div>`;
+                    
+                    weeks.forEach(week => {
+                        const isActive = isProjectActiveInWeek(project.id, week.key);
+                        html += `<div class="timeline-cell week-cell ${isActive ? 'active' : ''}"></div>`;
+                    });
+                    
+                    html += '</div>';
+                });
+
+                timelineGrid.innerHTML = html;
+            }
+
+            // Escape HTML
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // Theme Management
+            function toggleTheme() {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('wicksTheme', newTheme);
+                updateThemeButton();
+            }
+
+            function updateThemeButton() {
+                const theme = document.documentElement.getAttribute('data-theme');
+                const icon = themeToggle.querySelector('.theme-icon');
+                icon.textContent = theme === 'dark' ? '☀️' : '🌙';
+            }
+
+            function loadTheme() {
+                const savedTheme = localStorage.getItem('wicksTheme') || 'dark';
+                document.documentElement.setAttribute('data-theme', savedTheme);
+                updateThemeButton();
+            }
+
+            // Year selection
+            function handleYearChange() {
+                const newYear = parseInt(yearSelect.value);
+                if (!isNaN(newYear) && newYear >= 2020 && newYear <= 2050) {
+                    currentYear = newYear;
+                    renderTimeline();
+                }
+            }
+
+            // Initialize
+            function init() {
+                loadTheme();
+                yearSelect.value = currentYear;
+                
+                if (loadScheduleData()) {
+                    renderTimeline();
+                } else {
+                    timelineGrid.innerHTML = `
+                        <div class="empty-state">
+                            <p>No schedule data found.</p>
+                            <p><a href="crew-scheduler.html">Go to the main scheduler to get started</a></p>
+                        </div>
+                    `;
+                }
+
+                // Event Listeners
+                themeToggle.addEventListener('click', toggleTheme);
+                yearSelect.addEventListener('change', handleYearChange);
+
+                // Auto-refresh when returning to the page
+                window.addEventListener('focus', () => {
+                    if (loadScheduleData()) {
+                        renderTimeline();
+                    }
+                });
+            }
+
+            init();
+        })();
+    </script>
+</body>
+</html>

@@ -193,6 +193,42 @@
             background: var(--bg-hover);
             border-color: var(--border-light);
         }
+        /* Timeline Link Button */
+.timeline-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: var(--accent);
+    border: 1px solid var(--accent-muted);
+    border-radius: 6px;
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.timeline-link:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px var(--shadow);
+}
+
+.timeline-link svg {
+    width: 16px;
+    height: 16px;
+}
+
+@media (max-width: 768px) {
+    .timeline-link span {
+        display: none;
+    }
+    .timeline-link {
+        padding: 8px 10px;
+    }
+}
 
         /* Main Layout */
         .main-container {
@@ -203,12 +239,32 @@
         /* Sidebar */
         .sidebar {
             width: 220px;
+            min-width: 160px;
+            max-width: 500px;
             background: var(--bg-secondary);
             border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
             flex-shrink: 0;
             overflow-y: auto;
+            position: relative;
+        }
+
+        .sidebar-resize-handle {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 4px;
+            height: 100%;
+            cursor: col-resize;
+            background: transparent;
+            transition: background 0.15s ease;
+            z-index: 10;
+        }
+
+        .sidebar-resize-handle:hover,
+        .sidebar-resize-handle.dragging {
+            background: var(--accent);
         }
 
         .sidebar-section {
@@ -337,14 +393,13 @@
         .schedule-container {
             flex: 1;
             overflow: auto;
-            padding: 12px;
+            padding: 0 12px 12px 12px;
         }
 
         .schedule-grid {
             display: grid;
             border: 1px solid var(--border);
             border-radius: 8px;
-            overflow: hidden;
             min-width: fit-content;
         }
 
@@ -354,7 +409,7 @@
         }
 
         .grid-header-cell {
-            background: var(--bg-tertiary);
+            background-color: var(--bg-tertiary);
             padding: 10px 6px;
             text-align: center;
             font-size: 0.75rem;
@@ -365,14 +420,17 @@
             white-space: nowrap;
             position: sticky;
             top: 0;
-            z-index: 15;
+            z-index: 200;
+            transform: translateZ(0);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
         }
 
         .grid-header-cell:first-child {
             position: sticky;
             left: 0;
-            z-index: 20;
-            background: var(--bg-tertiary);
+            z-index: 201;
+            background-color: var(--bg-tertiary);
+            transform: translateZ(0);
         }
 
         .grid-header-cell:last-child {
@@ -940,6 +998,15 @@
         <h1>Wicks Construction</h1>
         <div class="header-controls">
             <button class="mobile-menu-toggle" id="mobileMenuToggle">Menu</button>
+            <a href="project-timeline.html" class="timeline-link" title="View Project Timeline">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <span>Timeline</span>
+        </a>
             <div class="date-picker-group">
                 <label for="startDate">Week of:</label>
                 <input type="date" class="date-picker" id="startDate">
@@ -950,14 +1017,16 @@
                 <button data-view="4" class="active" title="4 Weeks View">4W</button>
                 <button data-view="52" title="Year View">52W</button>
             </div>
-            <button class="theme-toggle" id="themeToggle">Light</button>
-        </div>
+            <button class="theme-toggle" id="themeToggle">
+                <span class="theme-icon">☀️</span>
+            </button>
     </header>
 
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <div class="main-container">
         <aside class="sidebar" id="sidebar">
+            <div class="sidebar-resize-handle" id="sidebarResizeHandle"></div>
             <div class="sidebar-section">
                 <div class="sidebar-header">
                     <h2>Projects</h2>
@@ -1047,7 +1116,8 @@
                 startDate: getMonday(new Date()),
                 settings: {
                     viewMode: 4,
-                    theme: 'dark'
+                    theme: 'dark',
+                    sidebarWidth: 220
                 }
             };
 
@@ -1078,6 +1148,7 @@
             const mobileMenuToggle = document.getElementById('mobileMenuToggle');
             const sidebar = document.getElementById('sidebar');
             const sidebarOverlay = document.getElementById('sidebarOverlay');
+            const sidebarResizeHandle = document.getElementById('sidebarResizeHandle');
             const projectSearch = document.getElementById('projectSearch');
             const sortProjectsBtn = document.getElementById('sortProjectsBtn');
             const contextMenu = document.getElementById('contextMenu');
@@ -1152,6 +1223,8 @@
                     state.assignments.forEach(a => {
                         if (a.itemType === 'equipment') a.itemType = 'notes';
                     });
+                    // Ensure sidebarWidth has a default
+                    state.settings.sidebarWidth = state.settings.sidebarWidth || 220;
                 }
             }
 
@@ -1287,7 +1360,9 @@
             }
 
             function updateThemeButton() {
-                themeToggle.textContent = state.settings.theme === 'dark' ? 'Light' : 'Dark';
+                const theme = state.settings.theme;
+                const icon = themeToggle.querySelector('.theme-icon');
+                icon.textContent = theme === 'dark' ? '☀️' : '🌙';
             }
 
             function updateDatePicker() {
@@ -1911,6 +1986,49 @@
                 sidebarOverlay.classList.remove('open');
             }
 
+            // Sidebar Resize
+            let isResizing = false;
+
+            function initSidebarResize() {
+                sidebarResizeHandle.addEventListener('mousedown', startResize);
+                document.addEventListener('mousemove', handleResize);
+                document.addEventListener('mouseup', stopResize);
+
+                // Apply saved width
+                sidebar.style.width = state.settings.sidebarWidth + 'px';
+            }
+
+            function startResize(e) {
+                isResizing = true;
+                sidebarResizeHandle.classList.add('dragging');
+                document.body.style.cursor = 'col-resize';
+                document.body.style.userSelect = 'none';
+                e.preventDefault();
+            }
+
+            function handleResize(e) {
+                if (!isResizing) return;
+
+                const newWidth = e.clientX;
+                const minWidth = 160;
+                const maxWidth = 500;
+
+                if (newWidth >= minWidth && newWidth <= maxWidth) {
+                    sidebar.style.width = newWidth + 'px';
+                    state.settings.sidebarWidth = newWidth;
+                }
+            }
+
+            function stopResize() {
+                if (isResizing) {
+                    isResizing = false;
+                    sidebarResizeHandle.classList.remove('dragging');
+                    document.body.style.cursor = '';
+                    document.body.style.userSelect = '';
+                    saveData();
+                }
+            }
+
             // Initialize
             function init() {
                 loadData();
@@ -1921,6 +2039,7 @@
                 });
 
                 render();
+                initSidebarResize();
 
                 // Event Listeners
                 addProjectBtn.addEventListener('click', () => openModal('add-project'));
