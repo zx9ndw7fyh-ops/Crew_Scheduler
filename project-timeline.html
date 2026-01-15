@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project Timeline - Wicks Construction</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             margin: 0;
@@ -342,6 +343,11 @@
         (function() {
             'use strict';
 
+            // Supabase Configuration
+            const SUPABASE_URL = 'https://hklhhennpuavvcremwuo.supabase.co';
+            const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhrbGhoZW5ucHVhdnZjcmVtd3VvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0MTEwOTAsImV4cCI6MjA4Mzk4NzA5MH0.BEt0hSSFI37V_ObNqeFY5JzxFOs5HfjVdo72YgEHQGA';
+            const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
             // DOM Elements
             const themeToggle = document.getElementById('themeToggle');
             const yearSelect = document.getElementById('yearSelect');
@@ -351,18 +357,26 @@
             let scheduleData = null;
             let currentYear = new Date().getFullYear();
 
-            // Load data from localStorage (same storage as main page)
-            function loadScheduleData() {
+            // Load data from Supabase
+            async function loadScheduleData() {
                 try {
-                    const data = localStorage.getItem('wicksSchedule');
-                    if (data) {
-                        scheduleData = JSON.parse(data);
-                        return true;
-                    }
+                    const [projectsRes, assignmentsRes] = await Promise.all([
+                        supabase.from('projects').select('*'),
+                        supabase.from('assignments').select('*')
+                    ]);
+
+                    if (projectsRes.error) throw projectsRes.error;
+                    if (assignmentsRes.error) throw assignmentsRes.error;
+
+                    scheduleData = {
+                        projects: projectsRes.data || [],
+                        assignments: assignmentsRes.data || []
+                    };
+                    return scheduleData.projects.length > 0;
                 } catch (e) {
-                    console.error('Error loading data:', e);
+                    console.error('Error loading data from Supabase:', e);
+                    return false;
                 }
-                return false;
             }
 
             // Get Monday of a given week
@@ -496,11 +510,12 @@
             }
 
             // Initialize
-            function init() {
+            async function init() {
                 loadTheme();
                 yearSelect.value = currentYear;
-                
-                if (loadScheduleData()) {
+
+                const hasData = await loadScheduleData();
+                if (hasData) {
                     renderTimeline();
                 } else {
                     timelineGrid.innerHTML = `
@@ -516,8 +531,9 @@
                 yearSelect.addEventListener('change', handleYearChange);
 
                 // Auto-refresh when returning to the page
-                window.addEventListener('focus', () => {
-                    if (loadScheduleData()) {
+                window.addEventListener('focus', async () => {
+                    const hasData = await loadScheduleData();
+                    if (hasData) {
                         renderTimeline();
                     }
                 });

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wicks Construction</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             margin: 0;
@@ -1169,6 +1170,13 @@
 
     <script>
         (function() {
+            'use strict';
+
+            // Supabase Configuration
+            const SUPABASE_URL = 'https://hklhhennpuavvcremwuo.supabase.co';
+            const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhrbGhoZW5ucHVhdnZjcmVtd3VvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0MTEwOTAsImV4cCI6MjA4Mzk4NzA5MH0.BEt0hSSFI37V_ObNqeFY5JzxFOs5HfjVdo72YgEHQGA';
+            const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
             // State
             let state = {
                 foremen: [],
@@ -1237,7 +1245,7 @@
 
             // Utility Functions
             function generateId() {
-                return Date.now().toString(36) + Math.random().toString(36).substr(2);
+                return crypto.randomUUID();
             }
 
             function getMonday(date) {
@@ -1267,32 +1275,204 @@
             }
 
             // Data Persistence
-            function saveData() {
-                // Save current localStorage state to undo history before overwriting
-                const oldSaved = localStorage.getItem('wicksSchedule');
-                if (oldSaved) {
-                    undoHistory.push(oldSaved);
-                    if (undoHistory.length > MAX_UNDO_HISTORY) {
-                        undoHistory.shift();
-                    }
-                    updateUndoButton();
-                }
-                localStorage.setItem('wicksSchedule', JSON.stringify(state));
+            // Save settings to localStorage (user preferences only)
+            function saveSettings() {
+                localStorage.setItem('wicksSettings', JSON.stringify({
+                    startDate: state.startDate,
+                    settings: state.settings
+                }));
             }
 
-            function undo() {
+            // Load settings from localStorage
+            function loadSettings() {
+                const saved = localStorage.getItem('wicksSettings');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    state.startDate = new Date(parsed.startDate || getMonday(new Date()));
+                    state.settings = { ...state.settings, ...parsed.settings };
+                    state.settings.sidebarWidth = state.settings.sidebarWidth || 220;
+                }
+            }
+
+            // Supabase Data Operations
+            async function loadDataFromSupabase() {
+                try {
+                    const [foremenRes, projectsRes, notesRes, assignmentsRes] = await Promise.all([
+                        supabase.from('foremen').select('*').order('order', { ascending: true }),
+                        supabase.from('projects').select('*'),
+                        supabase.from('notes').select('*'),
+                        supabase.from('assignments').select('*')
+                    ]);
+
+                    if (foremenRes.error) throw foremenRes.error;
+                    if (projectsRes.error) throw projectsRes.error;
+                    if (notesRes.error) throw notesRes.error;
+                    if (assignmentsRes.error) throw assignmentsRes.error;
+
+                    state.foremen = foremenRes.data || [];
+                    state.projects = projectsRes.data || [];
+                    state.notes = notesRes.data || [];
+                    state.assignments = assignmentsRes.data || [];
+                } catch (error) {
+                    console.error('Error loading data from Supabase:', error);
+                }
+            }
+
+            // Save foremen to Supabase
+            async function saveForemen() {
+                try {
+                    // Add order field to each foreman
+                    const foremenWithOrder = state.foremen.map((f, index) => ({
+                        ...f,
+                        order: index
+                    }));
+
+                    const { error } = await supabase
+                        .from('foremen')
+                        .upsert(foremenWithOrder, { onConflict: 'id' });
+
+                    if (error) throw error;
+                    pushUndoState();
+                } catch (error) {
+                    console.error('Error saving foremen:', error);
+                }
+            }
+
+            // Save projects to Supabase
+            async function saveProjects() {
+                try {
+                    const { error } = await supabase
+                        .from('projects')
+                        .upsert(state.projects, { onConflict: 'id' });
+
+                    if (error) throw error;
+                    pushUndoState();
+                } catch (error) {
+                    console.error('Error saving projects:', error);
+                }
+            }
+
+            // Save notes to Supabase
+            async function saveNotes() {
+                try {
+                    const { error } = await supabase
+                        .from('notes')
+                        .upsert(state.notes, { onConflict: 'id' });
+
+                    if (error) throw error;
+                    pushUndoState();
+                } catch (error) {
+                    console.error('Error saving notes:', error);
+                }
+            }
+
+            // Save assignments to Supabase
+            async function saveAssignments() {
+                try {
+                    const { error } = await supabase
+                        .from('assignments')
+                        .upsert(state.assignments, { onConflict: 'id' });
+
+                    if (error) throw error;
+                    pushUndoState();
+                } catch (error) {
+                    console.error('Error saving assignments:', error);
+                }
+            }
+
+            // Delete a foreman from Supabase
+            async function deleteForeman(id) {
+                try {
+                    const { error } = await supabase
+                        .from('foremen')
+                        .delete()
+                        .eq('id', id);
+
+                    if (error) throw error;
+                } catch (error) {
+                    console.error('Error deleting foreman:', error);
+                }
+            }
+
+            // Delete a project from Supabase
+            async function deleteProject(id) {
+                try {
+                    const { error } = await supabase
+                        .from('projects')
+                        .delete()
+                        .eq('id', id);
+
+                    if (error) throw error;
+                } catch (error) {
+                    console.error('Error deleting project:', error);
+                }
+            }
+
+            // Delete a note from Supabase
+            async function deleteNote(id) {
+                try {
+                    const { error } = await supabase
+                        .from('notes')
+                        .delete()
+                        .eq('id', id);
+
+                    if (error) throw error;
+                } catch (error) {
+                    console.error('Error deleting note:', error);
+                }
+            }
+
+            // Delete an assignment from Supabase
+            async function deleteAssignment(id) {
+                try {
+                    const { error } = await supabase
+                        .from('assignments')
+                        .delete()
+                        .eq('id', id);
+
+                    if (error) throw error;
+                } catch (error) {
+                    console.error('Error deleting assignment:', error);
+                }
+            }
+
+            // Undo functionality
+            function pushUndoState() {
+                const currentState = JSON.stringify({
+                    foremen: state.foremen,
+                    projects: state.projects,
+                    notes: state.notes,
+                    assignments: state.assignments
+                });
+                undoHistory.push(currentState);
+                if (undoHistory.length > MAX_UNDO_HISTORY) {
+                    undoHistory.shift();
+                }
+                updateUndoButton();
+            }
+
+            async function undo() {
                 if (undoHistory.length === 0) return;
 
                 const previousStateStr = undoHistory.pop();
-                localStorage.setItem('wicksSchedule', previousStateStr);
-
                 const parsed = JSON.parse(previousStateStr);
-                state = {
-                    ...state,
-                    ...parsed,
-                    startDate: new Date(parsed.startDate)
-                };
-                state.settings.sidebarWidth = state.settings.sidebarWidth || 220;
+
+                state.foremen = parsed.foremen || [];
+                state.projects = parsed.projects || [];
+                state.notes = parsed.notes || [];
+                state.assignments = parsed.assignments || [];
+
+                // Save all to Supabase without pushing to undo
+                try {
+                    await Promise.all([
+                        supabase.from('foremen').upsert(state.foremen.map((f, i) => ({ ...f, order: i })), { onConflict: 'id' }),
+                        supabase.from('projects').upsert(state.projects, { onConflict: 'id' }),
+                        supabase.from('notes').upsert(state.notes, { onConflict: 'id' }),
+                        supabase.from('assignments').upsert(state.assignments, { onConflict: 'id' })
+                    ]);
+                } catch (error) {
+                    console.error('Error during undo:', error);
+                }
 
                 updateUndoButton();
                 render();
@@ -1303,28 +1483,14 @@
                 undoBtn.disabled = undoHistory.length === 0;
             }
 
-            function loadData() {
-                const saved = localStorage.getItem('wicksSchedule');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    state = {
-                        ...state,
-                        ...parsed,
-                        startDate: new Date(parsed.startDate || getMonday(new Date()))
-                    };
-                    state.projects = state.projects || [];
-                    // Migrate equipment to notes
-                    state.notes = state.notes || state.equipment || [];
-                    delete state.equipment;
-                    state.assignments = state.assignments || [];
-                    state.foremen = state.foremen || [];
-                    // Migrate itemType from 'equipment' to 'notes'
-                    state.assignments.forEach(a => {
-                        if (a.itemType === 'equipment') a.itemType = 'notes';
-                    });
-                    // Ensure sidebarWidth has a default
-                    state.settings.sidebarWidth = state.settings.sidebarWidth || 220;
-                }
+            // Legacy saveData for compatibility - routes to appropriate functions
+            async function saveData() {
+                await Promise.all([
+                    saveForemen(),
+                    saveProjects(),
+                    saveNotes(),
+                    saveAssignments()
+                ]);
             }
 
             // Render Functions
@@ -1553,7 +1719,7 @@
                 contextMenu.classList.add('active');
             }
 
-            function handleContextMenuAction(action) {
+            async function handleContextMenuAction(action) {
                 if (!contextMenuAssignmentId) return;
 
                 const assignment = state.assignments.find(a => a.id === contextMenuAssignmentId);
@@ -1575,11 +1741,14 @@
                         assignment.completed = false;
                         break;
                     case 'remove':
+                        await deleteAssignment(contextMenuAssignmentId);
                         state.assignments = state.assignments.filter(a => a.id !== contextMenuAssignmentId);
                         break;
                 }
 
-                saveData();
+                if (action !== 'remove') {
+                    await saveAssignments();
+                }
                 render();
                 hideContextMenu();
             }
@@ -1605,7 +1774,7 @@
                 e.currentTarget.classList.remove('reorder-target');
             }
 
-            function handleCellCardDrop(e) {
+            async function handleCellCardDrop(e) {
                 e.currentTarget.classList.remove('reorder-target');
 
                 // If not a reorder operation, let event bubble to cell's handleDrop
@@ -1642,7 +1811,7 @@
                     const [moved] = state.assignments.splice(globalFromIndex, 1);
                     state.assignments.splice(globalToIndex, 0, moved);
 
-                    saveData();
+                    await saveAssignments();
                     render();
                 }
             }
@@ -1666,7 +1835,7 @@
                 e.currentTarget.classList.remove('reorder-target');
             }
 
-            function handleForemanReorderDrop(e) {
+            async function handleForemanReorderDrop(e) {
                 e.preventDefault();
                 e.currentTarget.classList.remove('reorder-target');
 
@@ -1681,7 +1850,7 @@
                 if (fromIndex !== -1 && toIndex !== -1) {
                     const [moved] = state.foremen.splice(fromIndex, 1);
                     state.foremen.splice(toIndex, 0, moved);
-                    saveData();
+                    await saveForemen();
                     render();
                 }
             }
@@ -1706,7 +1875,7 @@
                 e.currentTarget.classList.remove('reorder-target');
             }
 
-            function handleLibraryItemReorderDrop(e) {
+            async function handleLibraryItemReorderDrop(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 e.currentTarget.classList.remove('reorder-target');
@@ -1724,7 +1893,11 @@
                 if (fromIndex !== -1 && toIndex !== -1) {
                     const [moved] = items.splice(fromIndex, 1);
                     items.splice(toIndex, 0, moved);
-                    saveData();
+                    if (targetType === 'project') {
+                        await saveProjects();
+                    } else {
+                        await saveNotes();
+                    }
                     render();
                 }
             }
@@ -1781,7 +1954,7 @@
                 e.currentTarget.classList.remove('drag-over');
             }
 
-            function handleDrop(e) {
+            async function handleDrop(e) {
                 e.preventDefault();
                 e.currentTarget.classList.remove('drag-over');
 
@@ -1809,7 +1982,7 @@
                         }
                     }
 
-                    saveData();
+                    await saveAssignments();
                     render();
                 } catch (err) {
                     console.error('Drop error:', err);
@@ -1827,7 +2000,7 @@
                 e.currentTarget.classList.remove('drag-over');
             }
 
-            function handleLibraryDrop(e) {
+            async function handleLibraryDrop(e) {
                 e.preventDefault();
                 e.currentTarget.classList.remove('drag-over');
 
@@ -1836,8 +2009,8 @@
                 try {
                     const data = JSON.parse(e.dataTransfer.getData('application/json'));
                     if (data.source === 'grid' && data.assignmentId) {
+                        await deleteAssignment(data.assignmentId);
                         state.assignments = state.assignments.filter(a => a.id !== data.assignmentId);
-                        saveData();
                         render();
                     }
                 } catch (err) {
@@ -1871,38 +2044,51 @@
             }
 
             // Delete Handlers
-            function handleDeleteItem(e) {
+            async function handleDeleteItem(e) {
                 e.stopPropagation();
                 const itemId = e.currentTarget.dataset.itemId;
                 const itemType = e.currentTarget.dataset.itemType;
 
                 if (confirm(`Delete this ${itemType}? It will also be removed from all assignments.`)) {
-                    if (itemType === 'project') {
-                        state.projects = state.projects.filter(p => p.id !== itemId);
-                    } else {
-                        state.notes = state.notes.filter(n => n.id !== itemId);
+                    // Delete related assignments first
+                    const relatedAssignments = state.assignments.filter(a => a.itemId === itemId && a.itemType === itemType);
+                    for (const a of relatedAssignments) {
+                        await deleteAssignment(a.id);
                     }
                     state.assignments = state.assignments.filter(a => !(a.itemId === itemId && a.itemType === itemType));
-                    saveData();
+
+                    if (itemType === 'project') {
+                        await deleteProject(itemId);
+                        state.projects = state.projects.filter(p => p.id !== itemId);
+                    } else {
+                        await deleteNote(itemId);
+                        state.notes = state.notes.filter(n => n.id !== itemId);
+                    }
                     render();
                 }
             }
 
-            function handleRemoveAssignment(e) {
+            async function handleRemoveAssignment(e) {
                 e.stopPropagation();
                 const assignmentId = e.currentTarget.dataset.assignmentId;
+                await deleteAssignment(assignmentId);
                 state.assignments = state.assignments.filter(a => a.id !== assignmentId);
-                saveData();
                 render();
             }
 
-            function handleDeleteForeman(e) {
+            async function handleDeleteForeman(e) {
                 const foremanId = e.currentTarget.dataset.foremanId;
                 const foreman = state.foremen.find(f => f.id === foremanId);
                 if (confirm(`Delete foreman "${foreman.name}"? All their assignments will be removed.`)) {
+                    // Delete related assignments first
+                    const relatedAssignments = state.assignments.filter(a => a.foremanId === foremanId);
+                    for (const a of relatedAssignments) {
+                        await deleteAssignment(a.id);
+                    }
                     state.assignments = state.assignments.filter(a => a.foremanId !== foremanId);
+
+                    await deleteForeman(foremanId);
                     state.foremen = state.foremen.filter(f => f.id !== foremanId);
-                    saveData();
                     render();
                 }
             }
@@ -1914,9 +2100,9 @@
             }
 
             // Sort handler
-            function handleSortProjects() {
+            async function handleSortProjects() {
                 state.projects.sort((a, b) => a.name.localeCompare(b.name));
-                saveData();
+                await saveProjects();
                 renderLibrary('project');
             }
 
@@ -1994,7 +2180,7 @@
                 modalName.disabled = false;
             }
 
-            function handleModalSubmit(e) {
+            async function handleModalSubmit(e) {
                 e.preventDefault();
 
                 if (modalMode === 'edit-assignment') {
@@ -2002,7 +2188,7 @@
                     if (assignment) {
                         assignment.comment = modalComment.value.trim() || null;
                     }
-                    saveData();
+                    await saveAssignments();
                     render();
                     closeModal();
                     return;
@@ -2017,32 +2203,36 @@
                         name: name,
                         notes: modalNotes.value.trim() || null
                     });
+                    await saveProjects();
                 } else if (modalMode === 'edit-project') {
                     const project = state.projects.find(p => p.id === editingItemId);
                     if (project) {
                         project.name = name;
                         project.notes = modalNotes.value.trim() || null;
                     }
+                    await saveProjects();
                 } else if (modalMode === 'add-notes') {
                     state.notes.push({
                         id: generateId(),
                         name: name,
                         notes: modalNotes.value.trim() || null
                     });
+                    await saveNotes();
                 } else if (modalMode === 'edit-notes') {
                     const note = state.notes.find(n => n.id === editingItemId);
                     if (note) {
                         note.name = name;
                         note.notes = modalNotes.value.trim() || null;
                     }
+                    await saveNotes();
                 } else if (modalMode === 'add-foreman') {
                     state.foremen.push({
                         id: generateId(),
                         name: name
                     });
+                    await saveForemen();
                 }
 
-                saveData();
                 render();
                 closeModal();
             }
@@ -2051,7 +2241,7 @@
             function toggleTheme() {
                 state.settings.theme = state.settings.theme === 'dark' ? 'light' : 'dark';
                 document.documentElement.setAttribute('data-theme', state.settings.theme);
-                saveData();
+                saveSettings();
                 updateThemeButton();
             }
 
@@ -2061,7 +2251,7 @@
                 viewToggle.forEach(btn => {
                     btn.classList.toggle('active', parseInt(btn.dataset.view) === state.settings.viewMode);
                 });
-                saveData();
+                saveSettings();
                 renderGrid();
             }
 
@@ -2069,14 +2259,14 @@
             function handleDateChange(e) {
                 const selectedDate = new Date(e.target.value + 'T00:00:00');
                 state.startDate = getMonday(selectedDate);
-                saveData();
+                saveSettings();
                 render();
             }
 
             // Today Button Handler
             function goToToday() {
                 state.startDate = getMonday(new Date());
-                saveData();
+                saveSettings();
                 render();
             }
 
@@ -2130,18 +2320,22 @@
                     sidebarResizeHandle.classList.remove('dragging');
                     document.body.style.cursor = '';
                     document.body.style.userSelect = '';
-                    saveData();
+                    saveSettings();
                 }
             }
 
             // Initialize
-            function init() {
-                loadData();
+            async function init() {
+                // Load user settings from localStorage
+                loadSettings();
                 document.documentElement.setAttribute('data-theme', state.settings.theme);
 
                 viewToggle.forEach(btn => {
                     btn.classList.toggle('active', parseInt(btn.dataset.view) === state.settings.viewMode);
                 });
+
+                // Load data from Supabase
+                await loadDataFromSupabase();
 
                 render();
                 initSidebarResize();
