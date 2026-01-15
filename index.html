@@ -1643,7 +1643,8 @@
 
             function getItemById(itemId, itemType) {
                 const items = itemType === 'project' ? state.projects : state.notes;
-                return items.find(i => i.id === itemId);
+                // Use string comparison to handle type mismatches (int vs string from Supabase)
+                return items.find(i => String(i.id) === String(itemId));
             }
 
             function getAssignmentsForCell(foremanId, weekKey) {
@@ -1993,15 +1994,20 @@
                     const data = JSON.parse(e.dataTransfer.getData('application/json'));
 
                     if (data.source === 'library') {
-                        state.assignments.push({
-                            id: assignmentIdCounter++,
-                            itemId: data.itemId,
-                            itemType: data.itemType,
-                            foremanId: foremanId,
-                            weekKey: weekKey,
-                            comment: null,
-                            completed: false
-                        });
+                        // Look up the actual item to get its ID with correct type
+                        const items = data.itemType === 'project' ? state.projects : state.notes;
+                        const item = items.find(i => String(i.id) === String(data.itemId));
+                        if (item) {
+                            state.assignments.push({
+                                id: assignmentIdCounter++,
+                                itemId: item.id,  // Use actual ID from item (preserves type)
+                                itemType: data.itemType,
+                                foremanId: foremanId,
+                                weekKey: weekKey,
+                                comment: null,
+                                completed: false
+                            });
+                        }
                     } else if (data.source === 'grid') {
                         const assignment = state.assignments.find(a => a.id === data.assignmentId);
                         if (assignment) {
