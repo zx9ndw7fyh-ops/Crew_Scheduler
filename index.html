@@ -1315,7 +1315,17 @@
                     state.foremen = foremenRes.data || [];
                     state.projects = projectsRes.data || [];
                     state.notes = notesRes.data || [];
-                    state.assignments = assignmentsRes.data || [];
+
+                    // Transform snake_case to camelCase for assignments
+                    state.assignments = (assignmentsRes.data || []).map(a => ({
+                        id: a.id,
+                        itemId: a.item_id,
+                        itemType: a.item_type,
+                        foremanId: a.foreman_id,
+                        weekKey: a.week_key,
+                        comment: a.comment,
+                        completed: a.completed
+                    }));
                 } catch (error) {
                     console.error('Error loading data from Supabase:', error);
                 }
@@ -1372,9 +1382,20 @@
             // Save assignments to Supabase
             async function saveAssignments() {
                 try {
+                    // Transform camelCase to snake_case for Supabase
+                    const assignmentsForDb = state.assignments.map(a => ({
+                        id: a.id,
+                        item_id: a.itemId,
+                        item_type: a.itemType,
+                        foreman_id: a.foremanId,
+                        week_key: a.weekKey,
+                        comment: a.comment,
+                        completed: a.completed
+                    }));
+
                     const { error } = await supabase
                         .from('assignments')
-                        .upsert(state.assignments, { onConflict: 'id' });
+                        .upsert(assignmentsForDb, { onConflict: 'id' });
 
                     if (error) throw error;
                     pushUndoState();
